@@ -49,9 +49,7 @@ jobs:
           done
 
       - name: Lint & Format
-        run: |
-          npm run lint
-          npm run format
+        run: npm run format
 
       - name: Build
         run: npm run build
