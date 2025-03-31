@@ -1,0 +1,60 @@
+name: CI Workflow
+
+on:
+  push:
+    branches: ['main', 'staging']
+  pull_request:
+    branches: ['*']
+
+env:
+  STELLAR_SERVER_URL: ${{ secrets.STELLAR_SERVER_URL }}
+
+jobs:
+  build:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: NPM or Yarn install with caching
+        uses: bahmutov/npm-install@v1.6.0
+
+      - name: Start Stellar service
+        run: |
+          docker run -d \
+            --name stellar \
+            -p 8000:8000 \
+            stellar/quickstart:soroban-dev \
+            --local --enable-soroban-rpc
+
+      - name: Wait for Stellar to be ready
+        run: |
+          echo "Waiting for Stellar to start..."
+          for i in {1..30}; do
+            if nc -z localhost 8000; then
+              echo "Stellar is up!"
+              break
+            fi
+            echo "Waiting for Stellar..."
+            sleep 2
+          done
+
+      - name: Lint & Format
+        run: |
+          npm run lint
+          npm run format
+
+      - name: Build
+        run: npm run build
+
+      - name: Run Tests
+        run: npm run test
