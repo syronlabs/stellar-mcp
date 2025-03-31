@@ -1,0 +1,9 @@
+# version: '3'
+
+services:
+  stellar:
+    image: stellar/quickstart:soroban-dev
+    container_name: stellar-mcp
+    command: --local --enable-soroban-rpc
+    ports:
+      - '8000:8000'
