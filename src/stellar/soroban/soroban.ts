@@ -124,18 +124,32 @@ export class Soroban {
     stderr: string,
     contractPath: string,
   ): Array<{ type: string; text: string }> {
-    return [
+    const messages: Array<{ type: string; text: string }> = [
       { type: "text", text: "🚀 Starting contract build process..." },
       { type: "text", text: `📦 Building contract in: ${contractPath}` },
-      ...stdout.split("\n").map((line) => ({
-        type: "text",
-        text: line.trim(),
-      })),
-      ...stderr.split("\n").map((line) => ({
-        type: "text",
-        text: line.trim(),
-      })),
+      ...this.formatStdoutOutput(stdout),
+      ...this.formatStderrOutput(stderr),
     ];
+
+    return messages;
+  }
+
+  private formatStdoutOutput(
+    stdout: string,
+  ): Array<{ type: string; text: string }> {
+    return stdout.split("\n").map((line) => ({
+      type: "text",
+      text: line.trim(),
+    }));
+  }
+
+  private formatStderrOutput(
+    stderr: string,
+  ): Array<{ type: string; text: string }> {
+    return stderr.split("\n").map((line) => ({
+      type: "text",
+      text: line.trim(),
+    }));
   }
 
   private formatOptimizationResults(
@@ -158,37 +172,44 @@ export class Soroban {
         "target/wasm32-unknown-unknown/release",
       );
       if (!fs.existsSync(wasmDir)) {
-        return [
-          ...(this.formatBuildOutput(
-            stdout,
-            stderr,
-            contractPath,
-          ) as BuildAndOptimizeMessage[]),
-          {
-            type: "text",
-            text: "❌ Error: No WASM directory found after build",
-          },
-          {
-            type: "text",
-            text: "💡 Tip: Check if the build process completed successfully",
-          },
-        ];
+        const errorMessages = this.formatBuildOutput(
+          stdout,
+          stderr,
+          contractPath,
+        ) as BuildAndOptimizeMessage[];
+
+        errorMessages.push({
+          type: "text",
+          text: "❌ Error: No WASM directory found after build",
+        });
+
+        errorMessages.push({
+          type: "text",
+          text: "💡 Tip: Check if the build process completed successfully",
+        });
+
+        return errorMessages;
       }
 
       const wasmFiles = await this.findWasmFiles(wasmDir);
       if (wasmFiles.length === 0) {
-        return [
-          ...(this.formatBuildOutput(
-            stdout,
-            stderr,
-            contractPath,
-          ) as BuildAndOptimizeMessage[]),
-          { type: "text", text: "❌ No WASM files found to optimize" },
-          {
-            type: "text",
-            text: "💡 Tip: Check if the build process generated any WASM files",
-          },
-        ];
+        const errorMessages = this.formatBuildOutput(
+          stdout,
+          stderr,
+          contractPath,
+        ) as BuildAndOptimizeMessage[];
+
+        errorMessages.push({
+          type: "text",
+          text: "❌ No WASM files found to optimize",
+        });
+
+        errorMessages.push({
+          type: "text",
+          text: "💡 Tip: Check if the build process generated any WASM files",
+        });
+
+        return errorMessages;
       }
 
       const optimizationResults = await Promise.all(
@@ -201,60 +222,33 @@ export class Soroban {
         ),
       );
 
-      return [
-        ...(this.formatBuildOutput(
-          stdout,
-          stderr,
-          contractPath,
-        ) as BuildAndOptimizeMessage[]),
-        {
-          type: "text",
-          text: `✨ Found ${optimizationResults.length} WASM file(s) to optimize`,
-        },
+      const successMessage = this.formatBuildOutput(
+        stdout,
+        stderr,
+        contractPath,
+      ) as BuildAndOptimizeMessage[];
+
+      successMessage.push({
+        type: "text",
+        text: `✨ Found ${optimizationResults.length} WASM file(s) to optimize`,
+      });
+
+      successMessage.push(
         ...(this.formatOptimizationResults(
           optimizationResults,
         ) as BuildAndOptimizeMessage[]),
-        {
-          type: "text",
-          text: optimizationResults.some((r) => r.stderr.includes("Error"))
-            ? "⚠️ Build completed with optimization errors"
-            : "✅ Build and optimization completed successfully!",
-        },
-      ];
+      );
+
+      successMessage.push({
+        type: "text",
+        text: optimizationResults.some((r) => r.stderr.includes("Error"))
+          ? "⚠️ Build completed with optimization errors"
+          : "✅ Build and optimization completed successfully!",
+      });
+
+      return successMessage;
     } catch (error) {
       console.error("Error in build and optimize process:", error);
-      throw error;
-    }
-  }
-
-  async optimizeContracts(args: any) {
-    const { contractPath } = args;
-    try {
-      const wasmFiles = await this.findWasmFiles(
-        `${contractPath}/target/wasm32-unknown-unknown/release`,
-      );
-
-      if (wasmFiles.length === 0) {
-        return {
-          content: [{ type: "text", text: "No WASM files found to optimize" }],
-        };
-      }
-
-      const results = await Promise.all(
-        wasmFiles.map((file) => this.optimizeWasmFile(contractPath, file)),
-      );
-
-      return {
-        content: [
-          { type: "text", text: `Optimized ${results.length} WASM files` },
-          ...results.map((result) => ({
-            type: "text",
-            text: `Optimized ${result.file}\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
-          })),
-        ],
-      };
-    } catch (error) {
-      console.error("Error in optimization process:", error);
       throw error;
     }
   }
