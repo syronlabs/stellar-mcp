@@ -56,12 +56,12 @@ export class Soroban {
   private async executeBuildCommand(
     contractPath: string,
   ): Promise<{ stdout: string; stderr: string }> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const command = `cd ${contractPath} && stellar contract build`;
       exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error("Error:", error);
-          reject(error);
+          resolve({ stdout, stderr });
           return;
         }
         resolve({ stdout, stderr });
@@ -102,12 +102,16 @@ export class Soroban {
     stdout: string;
     stderr: string;
   }> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const optimizeCommand = `cd ${contractPath} && stellar contract optimize --wasm target/wasm32-unknown-unknown/release/${wasmFile}`;
       exec(optimizeCommand, (error, stdout, stderr) => {
         if (error) {
           console.error(`Error optimizing ${wasmFile}:`, error);
-          reject(error);
+          resolve({
+            file: wasmFile,
+            stdout: "",
+            stderr: `Error optimizing ${wasmFile}: ${error.message || error}`,
+          });
           return;
         }
         resolve({
@@ -161,9 +165,11 @@ export class Soroban {
     }));
   }
 
-  async buildAndOptimize(args: any): Promise<BuildAndOptimizeMessage[]> {
+  async buildAndOptimize(params: {
+    contractPath: string;
+  }): Promise<BuildAndOptimizeMessage[]> {
     try {
-      const { contractPath = process.cwd() } = args;
+      const { contractPath = process.cwd() } = params;
 
       const { stdout, stderr } = await this.executeBuildCommand(contractPath);
 
@@ -172,44 +178,44 @@ export class Soroban {
         "target/wasm32-unknown-unknown/release",
       );
       if (!fs.existsSync(wasmDir)) {
-        const errorMessages = this.formatBuildOutput(
+        const messages = this.formatBuildOutput(
           stdout,
           stderr,
           contractPath,
         ) as BuildAndOptimizeMessage[];
 
-        errorMessages.push({
+        messages.push({
           type: "text",
           text: "❌ Error: No WASM directory found after build",
         });
 
-        errorMessages.push({
+        messages.push({
           type: "text",
           text: "💡 Tip: Check if the build process completed successfully",
         });
 
-        return errorMessages;
+        return messages;
       }
 
       const wasmFiles = await this.findWasmFiles(wasmDir);
-      if (wasmFiles.length === 0) {
-        const errorMessages = this.formatBuildOutput(
+      if (!wasmFiles.length) {
+        const messages = this.formatBuildOutput(
           stdout,
           stderr,
           contractPath,
         ) as BuildAndOptimizeMessage[];
 
-        errorMessages.push({
+        messages.push({
           type: "text",
           text: "❌ No WASM files found to optimize",
         });
 
-        errorMessages.push({
+        messages.push({
           type: "text",
           text: "💡 Tip: Check if the build process generated any WASM files",
         });
 
-        return errorMessages;
+        return messages;
       }
 
       const optimizationResults = await Promise.all(
@@ -222,31 +228,31 @@ export class Soroban {
         ),
       );
 
-      const successMessage = this.formatBuildOutput(
+      const messages = this.formatBuildOutput(
         stdout,
         stderr,
         contractPath,
       ) as BuildAndOptimizeMessage[];
 
-      successMessage.push({
+      messages.push({
         type: "text",
         text: `✨ Found ${optimizationResults.length} WASM file(s) to optimize`,
       });
 
-      successMessage.push(
+      messages.push(
         ...(this.formatOptimizationResults(
           optimizationResults,
         ) as BuildAndOptimizeMessage[]),
       );
 
-      successMessage.push({
+      messages.push({
         type: "text",
         text: optimizationResults.some((r) => r.stderr.includes("Error"))
           ? "⚠️ Build completed with optimization errors"
           : "✅ Build and optimization completed successfully!",
       });
 
-      return successMessage;
+      return messages;
     } catch (error) {
       console.error("Error in build and optimize process:", error);
       throw error;
