@@ -69,6 +69,22 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
   - Fund a test account using the Friendbot (testnet only)
   - Input: `publicKey` (string): The public key of the account to fund
 
+#### 📝 Soroban Smart Contract Operations
+
+- **build_and_optimize**
+  - Build and optimize Soroban smart contracts
+  - Inputs:
+    - `contractPath` (string, optional): The path to the contract directory. Defaults to current working directory
+  - Outputs:
+    - Build logs and compilation status
+    - List of optimized WASM files
+    - Optimization results for each contract
+  - Features:
+    - Automatically builds contracts using `stellar contract build`
+    - Finds all WASM files in the target directory
+    - Optimizes each WASM file using `stellar contract optimize`
+    - Provides detailed logs of the entire process
+
 #### 📝 [WIP] Soroban Smart Contract Operations
 - **stellar_deploy_contract** 
   - Deploy a contract to the Stellar network
@@ -136,7 +152,15 @@ Here's the configuration to use the Stellar MCP server on Cursor, Windsurf, Clau
   "mcpServers": {
     "stellar": {
       "command": "docker",
-      "args": ["run", "-i", "--rm", "--init", "-e", "STELLAR_SERVER_URL=<STELLAR_URL_VALUE>", "stellar-mcp"]
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "--init",
+        "-e",
+        "STELLAR_SERVER_URL=<STELLAR_URL_VALUE>",
+        "stellar-mcp"
+      ]
     }
   }
 }
