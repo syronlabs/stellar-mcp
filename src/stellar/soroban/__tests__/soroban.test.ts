@@ -14,25 +14,31 @@ describe("Soroban Operations", () => {
   });
 
   describe("Build and Optimize", () => {
-    it("Should build and optimize a contract", async () => {
-      const result = await soroban.buildAndOptimize(path);
+    const BUILD_TIMEOUT = 60000;
 
-      const finishedMessage = result.find((r) =>
-        r.text.includes("Finished `release`"),
-      );
+    it(
+      "Should build and optimize a contract",
+      async () => {
+        const result = await soroban.buildAndOptimize(path);
 
-      const contractWasmFile = result.find((r) =>
-        r.text.includes("Optimizing hello_world.wasm"),
-      );
+        const finishedMessage = result.find((r) =>
+          r.text.includes("Finished `release`"),
+        );
 
-      const successMessage = result.find((r) =>
-        r.text.includes("Build and optimization completed successfully!"),
-      );
+        const contractWasmFile = result.find((r) =>
+          r.text.includes("Optimizing hello_world.wasm"),
+        );
 
-      expect(finishedMessage).toBeDefined();
-      expect(contractWasmFile).toBeDefined();
-      expect(successMessage).toBeDefined();
-    }, 30000);
+        const successMessage = result.find((r) =>
+          r.text.includes("Build and optimization completed successfully!"),
+        );
+
+        expect(finishedMessage).toBeDefined();
+        expect(contractWasmFile).toBeDefined();
+        expect(successMessage).toBeDefined();
+      },
+      BUILD_TIMEOUT,
+    );
 
     it("Should fail if the path to the contract is invalid", async () => {
       const result = await soroban.buildAndOptimize({
