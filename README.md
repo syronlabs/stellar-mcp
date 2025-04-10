@@ -85,17 +85,6 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Optimizes each WASM file using `stellar contract optimize`
     - Provides detailed logs of the entire process
 
-#### 📝 [WIP] Soroban Smart Contract Operations
-- **stellar_deploy_contract** 
-  - Deploy a contract to the Stellar network
-  - Inputs:
-    - `wasmBuffer` (string, required): The WASM buffer of the contract (base64 encoded)
-    - `sourceSecretKey` (string, required): The secret key of the source account
-
-- **stellar_invoke_contract**
-  - Invoke a contract on the Stellar network
-  - Input: `contractId` (string): The ID of the contract to invoke
-
 ## ⭐ Key Features
 
 - 👤 Account management (creation, funding, balance checking)
