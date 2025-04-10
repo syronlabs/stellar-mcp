@@ -15,6 +15,12 @@ export enum GetTransactionStatus {
   NOT_FOUND = "NOT_FOUND",
 }
 
+export enum Platform {
+  WINDOWS = "win32",
+  LINUX = "linux",
+  MACOS = "darwin",
+}
+
 type BuildAndOptimizeMessage = {
   type: "text";
   text: string;
@@ -23,11 +29,13 @@ type BuildAndOptimizeMessage = {
 export class Soroban {
   private server: rpc.Server;
   private networkPassphrase: string;
+  private platform: NodeJS.Platform;
   private networkConfig: {
     [key: string]: { server: rpc.Server; networkPassphrase: string };
   };
 
   constructor(serverUrl: string) {
+    this.platform = os.platform();
     this.networkConfig = {
       testnet: {
         server: new rpc.Server(serverUrl, { allowHttp: true }),
@@ -61,6 +69,13 @@ export class Soroban {
       exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error("Error:", error);
+          if (
+            this.platform !== Platform.WINDOWS &&
+            !stderr.includes("could not find `Cargo.toml`")
+          ) {
+            stderr = "The system cannot find the path specified";
+          }
+
           resolve({ stdout, stderr });
           return;
         }
@@ -71,9 +86,8 @@ export class Soroban {
 
   private async findWasmFiles(wasmDir: string): Promise<string[]> {
     return new Promise((resolve, reject) => {
-      const platform = os.platform();
       const findCommand =
-        platform === "win32"
+        this.platform === Platform.WINDOWS
           ? `dir /b "${wasmDir}\\*.wasm"`
           : `find "${wasmDir}" -maxdepth 1 -name "*.wasm"`;
 
@@ -103,7 +117,11 @@ export class Soroban {
     stderr: string;
   }> {
     return new Promise((resolve) => {
-      const optimizeCommand = `cd ${contractPath} && stellar contract optimize --wasm target/wasm32-unknown-unknown/release/${wasmFile}`;
+      const optimizeCommand =
+        this.platform === Platform.WINDOWS
+          ? `cd ${contractPath} && stellar contract optimize --wasm target/wasm32-unknown-unknown/release/${wasmFile}`
+          : `stellar contract optimize --wasm ${wasmFile}`;
+
       exec(optimizeCommand, (error, stdout, stderr) => {
         if (error) {
           console.error(`Error optimizing ${wasmFile}:`, error);
