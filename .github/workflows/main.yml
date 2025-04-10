@@ -2,9 +2,9 @@ name: CI Workflow
 
 on:
   push:
-    branches: ['main', 'staging']
+    branches: ["main", "staging"]
   pull_request:
-    branches: ['*']
+    branches: ["*"]
 
 env:
   STELLAR_SERVER_URL: ${{ secrets.STELLAR_SERVER_URL }}
@@ -16,11 +16,16 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
+        toolchain:
+          - stable
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Rust and Stellar CLI
+      - name: Install wasm32-unknown-unknown target
+        run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }} && rustup target add wasm32-unknown-unknown
+
+      - name: Install Stellar CLI
         uses: stellar/stellar-cli@v22.5.0
 
       - name: Use Node.js ${{ matrix.node-version }}
