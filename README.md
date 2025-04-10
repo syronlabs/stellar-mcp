@@ -71,7 +71,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
 
 #### 📝 Soroban Smart Contract Operations
 
-- **build_and_optimize**
+- **soroban_build_and_optimize**
   - Build and optimize Soroban smart contracts
   - Inputs:
     - `contractPath` (string, optional): The path to the contract directory. Defaults to current working directory
