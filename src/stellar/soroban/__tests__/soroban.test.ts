@@ -1,12 +1,15 @@
 import { resolve } from "path";
 import { z } from "zod";
 
+import { Classic } from "../../classic/classic";
+import { AccountKeyPairSchema } from "../../classic/schemas";
 import { BuildAndOptimizeSchema } from "../schemas";
 import { Soroban } from "../soroban";
 
 describe("Soroban Operations", () => {
   const serverUrl = "https://horizon-testnet.stellar.org";
   const soroban = new Soroban(serverUrl);
+  const classic = new Classic(serverUrl);
   let path: z.infer<typeof BuildAndOptimizeSchema>;
 
   beforeEach(async () => {
@@ -69,6 +72,103 @@ describe("Soroban Operations", () => {
       );
 
       expect(noContractPathErrorMessage).toBeDefined();
+    });
+  });
+
+  describe("Deploy Contract", () => {
+    let testAccount: z.infer<typeof AccountKeyPairSchema>;
+
+    beforeAll(async () => {
+      testAccount = await classic.createAccount();
+      await classic.fundAccount({ publicKey: testAccount.publicKey });
+    });
+
+    it("Should deploy a contract without constructor", async () => {
+      const result = await soroban.deploy({
+        wasmPath: resolve(
+          __dirname,
+          "./fixture/test_contract/target/wasm32-unknown-unknown/release/hello_world.wasm",
+        ),
+        secretKey: testAccount.secretKey,
+      });
+
+      const contractAddress = result
+        .find((r) => r.text.includes("Contract deployed successfully"))
+        ?.text.split(":")[1]
+        .trim();
+
+      const successMessage = result.find((r) =>
+        r.text.includes("Deployed!"),
+      )?.text;
+
+      expect(contractAddress).toBeDefined();
+      expect(contractAddress).toMatch(/^C[A-Z0-9]{55}$/);
+      expect(successMessage).toBeDefined();
+    });
+
+    it("Should deploy a contract with constructor", async () => {
+      const result = await soroban.deploy({
+        wasmPath: resolve(
+          __dirname,
+          "./fixture/test_contract/target/wasm32-unknown-unknown/release/contract_with_constructor.wasm",
+        ),
+        secretKey: testAccount.secretKey,
+        constructorArgs: [
+          {
+            name: "admin",
+            type: "Address",
+            value: testAccount.publicKey,
+          },
+        ],
+      });
+
+      const contractAddress = result
+        .find((r) => r.text.includes("Contract deployed successfully"))
+        ?.text.split(":")[1]
+        .trim();
+
+      const successMessage = result.find((r) =>
+        r.text.includes("Deployed!"),
+      )?.text;
+
+      expect(contractAddress).toBeDefined();
+      expect(contractAddress).toMatch(/^C[A-Z0-9]{55}$/);
+      expect(successMessage).toBeDefined();
+    });
+
+    it("Should fail if the contract address is not valid", async () => {
+      const result = await soroban.deploy({
+        wasmPath: resolve(
+          __dirname,
+          "./fixture/test_contract/target/wasm32-unknown-unknown/release/fake_contract.wasm",
+        ),
+        secretKey: testAccount.secretKey,
+      });
+
+      const errorMessage = result.find((r) =>
+        r.text.includes("❌ error: reading file"),
+      );
+
+      expect(errorMessage).toBeDefined();
+    });
+
+    it("Should fail if the contract has a constructor but no arguments were provided", async () => {
+      const result = await soroban.deploy({
+        wasmPath: resolve(
+          __dirname,
+          "./fixture/test_contract/target/wasm32-unknown-unknown/release/contract_with_constructor.wasm",
+        ),
+        secretKey: testAccount.secretKey,
+      });
+
+      const errorMessage = result.find((r) =>
+        r.text.includes("❌ Error in deploy process"),
+      )?.text;
+
+      expect(errorMessage).toBeDefined();
+      expect(errorMessage).toContain(
+        "⚠️ Contract has a constructor but no arguments were provided",
+      );
     });
   });
 });
