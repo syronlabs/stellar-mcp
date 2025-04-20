@@ -137,6 +137,12 @@ async function handleToolCall(
         return {
           content: buildAndOptimize,
         };
+      case "soroban_deploy":
+        const deploy = await soroban.deploy(args);
+
+        return {
+          content: deploy,
+        };
       default:
         throw new Error(`Tool ${name} not found`);
     }
