@@ -85,6 +85,48 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Optimizes each WASM file using `stellar contract optimize`
     - Provides detailed logs of the entire process
 
+- **soroban_deploy**
+  - Deploy Soroban smart contracts to the Stellar network
+  - Inputs:
+    - `wasmPath` (string, required): Path to the compiled WASM file
+    - `secretKey` (string, required): Secret key of the deploying account
+    - `constructorArgs` (array, optional): Arguments for contract constructor if applicable
+      - Each argument should be an object with:
+        - `name` (string): Name of the constructor parameter
+        - `type` (string): Type of the argument (e.g., "Address", "String", etc.)
+        - `value` (string): Value of the argument
+  - Outputs:
+    - Contract ID (starts with "C" followed by 55 characters)
+    - Deployment status messages
+    - Transaction details
+  - Features:
+    - Automatically detects if contract has a constructor
+    - Validates constructor arguments before deployment
+    - Throws error if constructor arguments are missing for contracts that require them
+    - Provides detailed deployment logs and status updates
+    - Supports both simple contracts and contracts with initialization logic
+  - Example Usage:
+    ```typescript
+    // Deploying a contract without constructor
+    await soroban.deploy({
+      wasmPath: "path/to/hello_world.wasm",
+      secretKey: "S...",
+    });
+
+    // Deploying a contract with constructor
+    await soroban.deploy({
+      wasmPath: "path/to/contract_with_constructor.wasm",
+      secretKey: "S...",
+      constructorArgs: [
+        {
+          name: "admin",
+          type: "Address",
+          value: "G...",
+        },
+      ],
+    });
+    ```
+
 ## ⭐ Key Features
 
 - 👤 Account management (creation, funding, balance checking)
