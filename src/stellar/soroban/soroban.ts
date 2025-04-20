@@ -248,9 +248,15 @@ export class Soroban extends Core {
       });
 
       return messages;
-    } catch (error) {
-      console.error("Error in deploy process:", error);
-      throw error;
+    } catch (error: unknown) {
+      const errorMessage = this.createDeploymentMessages();
+
+      errorMessage.push({
+        type: "text",
+        text: `❌ Error in deploy process: ${error instanceof Error ? error.message : String(error)}`,
+      });
+
+      return errorMessage;
     }
   }
 
