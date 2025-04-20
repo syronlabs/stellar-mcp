@@ -95,7 +95,8 @@ export class Soroban extends Core {
           : wasmFile;
 
       const optimizeCommand = this.getCommand("optimize", {
-        wasmPath: this.joinPath(contractPath, wasmPath),
+        wasmPath,
+        contractPath
       });
 
       exec(optimizeCommand, (error, stdout, stderr) => {

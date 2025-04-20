@@ -30,7 +30,7 @@ export class Core extends MessagesManager {
       dir: (args) => `ls ${args?.path || ""}`,
       build: (args) => `cd ${args?.path} && stellar contract build`,
       optimize: (args) =>
-        `stellar contract optimize --wasm ${args?.wasmPath} ${args?.output ? `--output "${args.output}"` : ""}`,
+        `stellar contract optimize --wasm ${args?.wasmPath}`,
       deploy: (args) =>
         `stellar contract deploy --wasm "${args?.wasmPath}" --source "${args?.secretKey}" --network ${args?.network || "testnet"} ${args?.constructorArgs?.length ? `-- ${args.constructorArgs}` : ""}`,
     };
@@ -41,7 +41,11 @@ export class Core extends MessagesManager {
       find: (args) => `dir /b "${args?.path}\\${args?.pattern}"`,
       dir: (args) => `dir ${args?.path || ""}`,
       build: (args) => `cd ${args?.path} && stellar contract build`,
-      optimize: (args) => `stellar contract optimize --wasm ${args?.wasmPath}`,
+      optimize: (args) =>
+        `stellar contract optimize --wasm ${this.resolvePath(
+          args?.contractPath as string,
+          args?.wasmPath as string,
+        )}`,
       deploy: (args) =>
         `stellar contract deploy --wasm "${args?.wasmPath}" --source "${args?.secretKey}" --network ${args?.network || "testnet"} ${args?.constructorArgs?.length ? `-- ${args.constructorArgs}` : ""}`,
     };
