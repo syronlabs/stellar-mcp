@@ -403,10 +403,10 @@ export class Soroban extends Core {
     return this.parseConstructorArgs(constructorMatch[1]);
   }
 
-  private parseConstructorArgs(argsString: string): ConstructorArg[] {
-    return argsString
+  private parseConstructorArgs(args: string): ConstructorArg[] {
+    return args
       .split(",")
-      .slice(1) // Remove env parameter
+      .slice(1)
       .map(this.parseArgument)
       .filter((arg): arg is ConstructorArg => arg !== null);
   }
