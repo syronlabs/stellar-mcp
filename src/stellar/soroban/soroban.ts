@@ -412,13 +412,15 @@ export class Soroban extends Core {
   }
 
   private parseArgument(arg: string): ConstructorArg | null {
-    const parts = arg.trim().split(": ");
-    if (parts.length !== 2) {
+    const [name, type] = arg.trim().split(": ").map((part) => part?.trim());
+
+    if (!name || !type) {
       return null;
     }
+
     return {
-      name: parts[0],
-      type: parts[1],
+      name,
+      type,
     };
   }
 
