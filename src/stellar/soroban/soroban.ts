@@ -307,15 +307,15 @@ export class Soroban extends Core {
   private formatContractDeploymentMessage(
     messages: OutputMessage[],
   ): OutputMessage[] {
-    const constractMessage = messages
+    const contractMessage = messages
       .filter((m) => m.text.length > 0)
       .find((message) => message.text.startsWith("C"));
 
-    if (!constractMessage) {
+    if (!contractMessage) {
       return messages;
     }
 
-    const contractAddress = constractMessage.text;
+    const contractAddress = contractMessage.text;
 
     return [
       {
