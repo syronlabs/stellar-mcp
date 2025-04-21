@@ -12,4 +12,12 @@ export const sorobanTools: Tool[] = [
       properties: Record<string, unknown>;
     },
   },
+  {
+    name: "soroban_deploy",
+    description: "Deploy a Soroban contract",
+    inputSchema: zodToJsonSchema(schemas.DeploySchema) as {
+      type: "object";
+      properties: Record<string, unknown>;
+    },
+  },
 ];
