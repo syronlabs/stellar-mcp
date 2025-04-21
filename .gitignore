@@ -4,3 +4,7 @@ dist
 .cursor
 .DS_Store
 counter
+
+# Soroban
+target/
+Cargo.lock
