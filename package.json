@@ -5,6 +5,10 @@
   "type": "module",
   "main": "dist/index.js",
   "issues": "https://github.com/genebson/stellar-mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/syronlabs/stellar-mcp"
+  },
   "bin": {
     "stellar-mcp": "dist/index.js"
   },
