@@ -23,3 +23,8 @@ export const DeploySchema = z.object({
     )
     .describe("Constructor arguments for the contract"),
 });
+
+export const GetContractMethodsSchema = z.object({
+  contractAddress: z.string().describe("Address of the contract"),
+  secretKey: z.string().describe("Secret key of the account"),
+});
