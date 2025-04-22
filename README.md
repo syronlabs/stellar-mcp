@@ -127,6 +127,54 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     });
     ```
 
+- **soroban_retrieve_contract_methods**
+  - Retrieve all available methods from a deployed Soroban smart contract
+  - Inputs:
+    - `contractAddress` (string, required): Address of the deployed contract (starts with "C")
+    - `secretKey` (string, required): Secret key of the account making the query
+  - Outputs:
+    - Array of method descriptions, each containing:
+      - Method name
+      - Argument types and structure
+      - "No arguments" for parameterless methods
+  - Features:
+    - Supports all Soroban data types (primitives, structs, nested structs)
+    - Provides clear method signatures
+    - Handles both simple and complex argument types
+    - Returns consistent format for all contract methods
+  - Example Usage:
+    ```typescript
+    const methods = await soroban.retrieveContractMethods({
+      contractAddress: "CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO",
+      secretKey: "S...",
+    });
+
+    // Example response:
+    [
+      {
+        type: "text",
+        text: "🚀 Retrieving contract methods for address: CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO"
+      },
+      {
+        type: "text",
+        text: "Method: \"set_admin\"; Arguments: admin: Address"
+      },
+      {
+        type: "text",
+        text: "Method: \"get_admin\"; Arguments: No arguments"
+      },
+      {
+        type: "text",
+        text: "Method: \"method_with_args\"; Arguments: arg1: u32, arg2: u32"
+      },
+      {
+        type: "text",
+        text: "Method: \"struct_as_arg\"; Arguments: arg: { admin: Address }"
+      }
+    ]
+    ```
+
+
 ## ⭐ Key Features
 
 - 👤 Account management (creation, funding, balance checking)
