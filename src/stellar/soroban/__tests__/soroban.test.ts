@@ -1,10 +1,20 @@
 import { resolve } from "path";
 import { z } from "zod";
 
+import { OutputMessage } from "../../../interfaces/common.interface";
 import { Classic } from "../../classic/classic";
 import { AccountKeyPairSchema } from "../../classic/schemas";
 import { BuildAndOptimizeSchema } from "../schemas";
 import { Soroban } from "../soroban";
+
+function getContractAddress(result: OutputMessage[]): string {
+  return (
+    result
+      .find((r) => r.text.includes("Contract deployed successfully"))
+      ?.text.split(":")[1]
+      .trim() ?? ""
+  );
+}
 
 describe("Soroban Operations", () => {
   const serverUrl = "https://horizon-testnet.stellar.org";
@@ -168,6 +178,101 @@ describe("Soroban Operations", () => {
       expect(errorMessage).toBeDefined();
       expect(errorMessage).toContain(
         "⚠️ Contract has a constructor but no arguments were provided",
+      );
+    });
+  });
+
+  describe("Retrieve Contract Methods", () => {
+    let testAccount: z.infer<typeof AccountKeyPairSchema>;
+
+    beforeAll(async () => {
+      testAccount = await classic.createAccount();
+      await classic.fundAccount({ publicKey: testAccount.publicKey });
+    });
+
+    it("Should retrieve contract methods without constructor", async () => {
+      const deployResult = await soroban.deploy({
+        wasmPath: resolve(
+          __dirname,
+          "./fixture/test_contract/target/wasm32-unknown-unknown/release/hello_world.wasm",
+        ),
+        secretKey: testAccount.secretKey,
+      });
+
+      const contractAddress = getContractAddress(deployResult);
+      const result = await soroban.retrieveContractMethods({
+        contractAddress,
+        secretKey: testAccount.secretKey,
+      });
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+
+      const methodEntries = result.filter(
+        (item) => item.type === "text" && item.text.startsWith('Method: "'),
+      );
+
+      const methodTexts = methodEntries.map((entry) => entry.text);
+
+      expect(methodTexts).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining('Method: "hello"; Arguments: to: String'),
+        ]),
+      );
+    });
+
+    it("Should retrieve contract methods with constructor", async () => {
+      const deployResult = await soroban.deploy({
+        wasmPath: resolve(
+          __dirname,
+          "./fixture/test_contract/target/wasm32-unknown-unknown/release/contract_with_constructor.wasm",
+        ),
+        secretKey: testAccount.secretKey,
+        constructorArgs: [
+          {
+            name: "admin",
+            type: "Address",
+            value: testAccount.publicKey,
+          },
+        ],
+      });
+
+      const contractAddress = getContractAddress(deployResult);
+
+      const result = await soroban.retrieveContractMethods({
+        contractAddress,
+        secretKey: testAccount.secretKey,
+      });
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+
+      const methodEntries = result.filter(
+        (item) => item.type === "text" && item.text.startsWith('Method: "'),
+      );
+
+      expect(methodEntries.length).toBeGreaterThan(0);
+
+      const methodTexts = methodEntries.map((entry) => entry.text);
+
+      expect(methodTexts).toEqual(
+        expect.arrayContaining([
+          expect.stringContaining(
+            'Method: "set_admin"; Arguments: admin: Address',
+          ),
+          expect.stringContaining(
+            'Method: "get_admin"; Arguments: No arguments',
+          ),
+          expect.stringContaining(
+            'Method: "method_with_args"; Arguments: arg1: u32, arg2: u32',
+          ),
+          expect.stringContaining(
+            'Method: "struct_as_arg"; Arguments: arg: { admin: Address }',
+          ),
+          expect.stringContaining(
+            'Method: "struct_as_arg_deep"; Arguments: arg: { admin: Address, data: { admin: Address } }',
+          ),
+        ]),
       );
     });
   });
