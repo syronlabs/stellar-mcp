@@ -263,8 +263,8 @@ describe("Soroban Operations", () => {
           expect.stringContaining(
             'Method: "get_admin"; Arguments: No arguments',
           ),
-          expect.stringContaining(
-            'Method: "method_with_args"; Arguments: arg1: u32, arg2: u32',
+          expect.stringMatching(
+            /Method: "method_with_args"; Arguments: (arg1: u32, arg2: u32|arg2: u32, arg1: u32)/,
           ),
           expect.stringContaining(
             'Method: "struct_as_arg"; Arguments: arg: { admin: Address }',

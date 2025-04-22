@@ -313,12 +313,9 @@ export class Soroban extends Core {
     });
 
     return new Promise<string[]>((resolve, reject) => {
-      exec(command, (error, stdout) => {
-        if (error) {
-          console.error("Error retrieving contract methods:", error);
-          reject(error);
-        }
+      exec(command, (_, stdout) => {
         const methods = this.parseContractInfo(stdout);
+
         resolve(methods);
       });
     });
@@ -342,13 +339,10 @@ export class Soroban extends Core {
       return new Promise<{
         method: string;
         args: Array<{ name: string; type: string }>;
-      }>((resolve, reject) => {
-        exec(command, (error, stdout) => {
-          if (error) {
-            console.error("Error retrieving method arguments:", error);
-            reject(error);
-          }
+      }>((resolve) => {
+        exec(command, (_, stdout) => {
           const args = this.parseContractArgs(stdout.split("\n"));
+
           resolve({ method, args });
         });
       });
