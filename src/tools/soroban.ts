@@ -20,4 +20,12 @@ export const sorobanTools: Tool[] = [
       properties: Record<string, unknown>;
     },
   },
+  {
+    name: "soroban_retrieve_contract_methods",
+    description: "Retrieve the methods of a Soroban contract",
+    inputSchema: zodToJsonSchema(schemas.GetContractMethodsSchema) as {
+      type: "object";
+      properties: Record<string, unknown>;
+    },
+  },
 ];

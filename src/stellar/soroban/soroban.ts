@@ -5,6 +5,7 @@ import getNetworkConfig from "../../config/environment.config.js";
 import { OutputMessage, Platform } from "../../interfaces/common.interface.js";
 import { DeployContractArgs } from "../../interfaces/soroban/DeployContractArgs.js";
 import { ConstructorArg } from "../../interfaces/soroban/DeployContractArgs.js";
+import { GetContractMethodsArgs } from "../../interfaces/soroban/GetContractMethods.js";
 import { Core } from "../core/core.js";
 
 export class Soroban extends Core {
@@ -96,7 +97,7 @@ export class Soroban extends Core {
 
       const optimizeCommand = this.getCommand("optimize", {
         wasmPath,
-        contractPath
+        contractPath,
       });
 
       exec(optimizeCommand, (error, stdout, stderr) => {
@@ -260,6 +261,142 @@ export class Soroban extends Core {
       return errorMessage;
     }
   }
+  async retrieveContractMethods(
+    params: GetContractMethodsArgs,
+  ): Promise<OutputMessage[]> {
+    try {
+      const { contractAddress, secretKey } = params;
+      const messages = this.createInitialMessage(contractAddress);
+
+      const contractMethods = await this.getContractMethods(
+        contractAddress,
+        secretKey,
+      );
+
+      const methodsWithArgs = await this.getMethodArguments(
+        contractAddress,
+        secretKey,
+        contractMethods,
+      );
+
+      methodsWithArgs.forEach((method) => {
+        messages.push({
+          type: "text",
+          text: `Method: "${method.method}"; Arguments: ${method.args.length > 0 ? method.args.map((arg) => `${arg.name}: ${arg.type}`).join(", ") : "No arguments"}`,
+        });
+      });
+
+      return messages;
+    } catch (error) {
+      console.error("Error in retrieve contract methods process:", error);
+      throw error;
+    }
+  }
+
+  private createInitialMessage(contractAddress: string): OutputMessage[] {
+    return [
+      {
+        type: "text",
+        text: `🚀 Retrieving contract methods for address: ${contractAddress}`,
+      },
+    ];
+  }
+
+  private async getContractMethods(
+    contractAddress: string,
+    secretKey: string,
+  ): Promise<string[]> {
+    const command = this.getCommand("contractInfo", {
+      contractId: contractAddress,
+      network: this.network,
+      secretKey,
+    });
+
+    return new Promise<string[]>((resolve, reject) => {
+      exec(command, (_, stdout) => {
+        const methods = this.parseContractInfo(stdout);
+
+        resolve(methods);
+      });
+    });
+  }
+
+  private async getMethodArguments(
+    contractAddress: string,
+    secretKey: string,
+    methods: string[],
+  ): Promise<
+    Array<{ method: string; args: Array<{ name: string; type: string }> }>
+  > {
+    const methodArgs = methods.map(async (method) => {
+      const command = this.getCommand("contractMethod", {
+        contractId: contractAddress,
+        network: this.network,
+        secretKey,
+        method,
+      });
+
+      return new Promise<{
+        method: string;
+        args: Array<{ name: string; type: string }>;
+      }>((resolve) => {
+        exec(command, (_, stdout) => {
+          const args = this.parseContractArgs(stdout.split("\n"));
+
+          resolve({ method, args });
+        });
+      });
+    });
+
+    return Promise.all(methodArgs);
+  }
+
+  private parseContractInfo(stdout: string): string[] {
+    const lines = stdout.split("\n").map((line) => line.trim());
+    const commandsIndex = lines.findIndex((line) =>
+      line.startsWith("Commands:"),
+    );
+    const helpIndex = lines.findIndex((line) => line.startsWith("help"));
+
+    return lines
+      .slice(commandsIndex + 1, helpIndex)
+      .filter((method) => !method.includes("__constructor"))
+      .map((method) => method.replace("  - ", ""));
+  }
+
+  private parseContractArgs(
+    output: string[],
+  ): Array<{ name: string; type: string }> {
+    const optionsStartIndex = output.findIndex((line) => line === "Options:");
+    if (optionsStartIndex === -1) return [];
+
+    return output
+      .slice(optionsStartIndex + 1)
+      .map((line) => line.trim())
+      .filter(this.isValidArgumentLine)
+      .map(this.parseArgumentLine)
+      .filter((arg): arg is { name: string; type: string } => arg !== null);
+  }
+
+  private isValidArgumentLine(line: string): boolean {
+    if (!line) return false;
+
+    const invalidPrefixes = ["-h", "Usage:", "Example:", "Usage Notes:"];
+
+    return !invalidPrefixes.some((prefix) => line.startsWith(prefix));
+  }
+
+  private parseArgumentLine(
+    line: string,
+  ): { name: string; type: string } | null {
+    const match = line.match(/^--([a-zA-Z0-9_]+)\s*<([^>]+)>$/);
+    if (!match) return null;
+
+    return {
+      name: match[1],
+      type: match[2],
+    };
+  }
 
   private createDeploymentMessages(): OutputMessage[] {
     return [
@@ -412,7 +549,10 @@ export class Soroban extends Core {
   }
 
   private parseArgument(arg: string): ConstructorArg | null {
-    const [name, type] = arg.trim().split(": ").map((part) => part?.trim());
+    const [name, type] = arg
+      .trim()
+      .split(": ")
+      .map((part) => part?.trim());
 
     if (!name || !type) {
       return null;
