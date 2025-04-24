@@ -380,11 +380,10 @@ export class Soroban extends Core {
 
   private isValidArgumentLine(line: string): boolean {
     if (!line) return false;
-    if (line.startsWith("-h")) return false;
-    if (line.startsWith("Usage:")) return false;
-    if (line.startsWith("Example:")) return false;
-    if (line.startsWith("Usage Notes:")) return false;
-    return true;
+
+    const invalidPrefixes = ["-h", "Usage:", "Example:", "Usage Notes:"];
+
+    return !invalidPrefixes.some((prefix) => line.startsWith(prefix));
   }
 
   private parseArgumentLine(
