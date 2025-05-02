@@ -515,12 +515,6 @@ export class Soroban extends Core {
     );
   }
 
-  private verifyPackageName(contractPath: string): void {
-    const packageName = this.readFile<string>(
-      this.resolvePath(contractPath, "Cargo.toml"),
-    );
-  }
-
   private resolveConstructorArgs(constructorArgs: ConstructorArg[]): string {
     return constructorArgs
       .map((arg) => `--${arg.name} ${arg.value}`)
