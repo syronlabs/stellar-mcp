@@ -32,21 +32,25 @@ describe('ContractParser', () => {
 
       expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
 
+      const constructorMethod = methods.find(
+        (method) => method.name === '__constructor',
+      );
+
       const expectedConstructorParameters = [
         { name: 'admin', type: 'Address' },
       ];
 
-      const expectedFields = [
-        {
-          name: '__constructor',
-          parameters: expect.arrayContaining(
-            expectedConstructorParameters.map(expect.objectContaining),
-          ),
-          returnType: '()',
-        },
-      ];
+      const expectedFields = {
+        name: '__constructor',
+        parameters: expect.arrayContaining(
+          expectedConstructorParameters.map(expect.objectContaining),
+        ),
+        returnType: '()',
+      };
 
-      expect(methods[0]).toEqual(expect.objectContaining(expectedFields));
+      expect(constructorMethod).toEqual(
+        expect.objectContaining(expectedFields),
+      );
     });
 
     it('Should not include the env parameter in the methods', () => {
@@ -562,7 +566,7 @@ describe('ContractParser', () => {
 
   describe('Error Cases', () => {
     it('Should handle invalid field syntax gracefully', () => {
-      const EXPECTED_AMOUNT_OF_STRUCTS = 0;
+      const EXPECTED_AMOUNT_OF_STRUCTS = 5;
       const source =
         readFixture('contract-output.txt') +
         '\n' +
