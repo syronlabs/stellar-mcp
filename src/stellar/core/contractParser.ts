@@ -5,6 +5,7 @@ import {
   IContractMethod,
   IContractParameter,
   IContractStruct,
+  Visibility,
 } from '../../interfaces/soroban/ContractInterface';
 
 const REGEX_PATTERNS = {
@@ -153,17 +154,14 @@ export class ContractParser {
     });
   }
 
-  private parseField(fieldText: string): ['pub' | 'private', string, string] {
-    const parts = fieldText.trim().split(':');
-    if (parts.length !== 2) {
-      return ['private', '', ''];
-    }
+  private parseField(fieldText: string): [Visibility, string, string] {
+    const [visibilityAndName, type] = fieldText.split(':').map((s) => s.trim());
 
-    const [visibilityAndName, type] = parts.map((s) => s.trim());
-    const visibility: 'pub' | 'private' = visibilityAndName.startsWith('pub')
-      ? 'pub'
-      : 'private';
-    const name = visibilityAndName.replace('pub', '').trim();
+    const visibility: Visibility = visibilityAndName.startsWith('pub')
+      ? Visibility.Public
+      : Visibility.Private;
+
+    const name = visibilityAndName.replace(/^(pub|private)\s+/, '');
 
     return [visibility, name, type];
   }

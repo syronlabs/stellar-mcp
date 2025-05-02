@@ -1,3 +1,8 @@
+export enum Visibility {
+  Public = 'pub',
+  Private = 'private',
+}
+
 export interface IContractMethod {
   name: string;
   parameters: IContractParameter[];
@@ -17,7 +22,7 @@ export interface IContractStruct {
 export interface IContractField {
   name: string;
   type: string;
-  visibility: 'pub' | 'private';
+  visibility: Visibility;
 }
 
 export interface IContractEnum {
