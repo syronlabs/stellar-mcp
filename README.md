@@ -128,23 +128,54 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     ```
 
 - **soroban_retrieve_contract_methods**
-  - Retrieve all available methods from a deployed Soroban smart contract
+  - Retrieve the complete interface of a deployed Soroban smart contract
   - Inputs:
     - `contractAddress` (string, required): Address of the deployed contract (starts with "C")
     - `secretKey` (string, required): Secret key of the account making the query
   - Outputs:
-    - Array of method descriptions, each containing:
-      - Method name
-      - Argument types and structure
-      - "No arguments" for parameterless methods
+    - A structured ContractInterface object containing:
+      - `name`: The name of the contract
+      - `methods`: Array of contract methods, each containing:
+        - `name`: Method name
+        - `parameters`: Array of parameters with:
+          - `name`: Parameter name
+          - `type`: Parameter type, which can be:
+            - Primitive types (u32, i32, u64, i64, u128, i128, bool)
+            - Soroban types (Address, String, Bytes, BytesN, Duration, Timepoint)
+            - Custom structs (Data, ComplexData, etc.)
+            - Collections (Vec<T>, Map<K, V>)
+            - Optional types (Option<T>)
+            - Tuples ((T1, T2, ...))
+            - Result types (Result<T, E>)
+        - `returnType`: Return type of the method, which can be:
+          - Void (())
+          - Single type (T)
+          - Tuple ((T1, T2, ...))
+          - Result (Result<T, E>)
+      - `structs`: Array of contract structs, each containing:
+        - `name`: Struct name
+        - `fields`: Array of fields with name, type, and visibility
+      - `enums`: Array of contract enums, each containing:
+        - `name`: Enum name
+        - `variants`: Array of variants with:
+          - `name`: Variant name
+          - `value`: Optional numeric value (for C-style enums)
+          - `dataType`: Optional data type for variants with associated data
+        - `isError`: Boolean indicating if it's an error enum
   - Features:
-    - Supports all Soroban data types (primitives, structs, nested structs)
-    - Provides clear method signatures
-    - Handles both simple and complex argument types
-    - Returns consistent format for all contract methods
+    - Supports all Soroban data types (primitives, structs, nested structs, enums)
+    - Provides complete contract interface including methods, structs, and enums
+    - Handles complex data types and nested structures
+    - Returns a structured JSON representation of the contract interface
+    - Supports various enum types:
+      - Simple enums (no associated data)
+      - C-style enums (with numeric values)
+      - Enums with single data type
+      - Enums with tuple data types
+      - Error enums (marked with #[contracterror])
   - Example Usage:
     ```typescript
-    const methods = await soroban.retrieveContractMethods({
+    const result = await soroban.retrieveContractMethods({
       contractAddress: "CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO",
       secretKey: "S...",
     });
@@ -157,23 +188,222 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
       },
       {
         type: "text",
-        text: "Method: \"set_admin\"; Arguments: admin: Address"
+        text: "Interface retrieved successfully"
       },
       {
         type: "text",
-        text: "Method: \"get_admin\"; Arguments: No arguments"
+        text: "Contract Interface"
       },
       {
         type: "text",
-        text: "Method: \"method_with_args\"; Arguments: arg1: u32, arg2: u32"
-      },
-      {
-        type: "text",
-        text: "Method: \"struct_as_arg\"; Arguments: arg: { admin: Address }"
+        text: JSON.stringify({
+          name: "Contract",
+          methods: [
+            {
+              name: "handle_integers",
+              parameters: [
+                { name: "i32_val", type: "i32" },
+                { name: "i64_val", type: "i64" },
+                { name: "i128_val", type: "i128" },
+                { name: "i256_val", type: "I256" },
+                { name: "u32_val", type: "u32" },
+                { name: "u64_val", type: "u64" },
+                { name: "u128_val", type: "u128" },
+                { name: "u256_val", type: "U256" }
+              ],
+              returnType: "(i32, u32)"
+            },
+            {
+              name: "handle_strings",
+              parameters: [
+                { name: "str_val", type: "String" },
+                { name: "bytes_val", type: "Bytes" },
+                { name: "bytes_n_val", type: "BytesN<32>" }
+              ],
+              returnType: "String"
+            },
+            {
+              name: "handle_collections",
+              parameters: [
+                { name: "map", type: "Map<String, u32>" },
+                { name: "vec", type: "Vec<u32>" }
+              ],
+              returnType: "(Map<String, u32>, Vec<u32>)"
+            },
+            {
+              name: "handle_custom_types",
+              parameters: [
+                { name: "data", type: "Data" },
+                { name: "complex_data", type: "ComplexData" }
+              ],
+              returnType: "(Data, ComplexData)"
+            },
+            {
+              name: "handle_optionals",
+              parameters: [
+                { name: "maybe_u32", type: "Option<u32>" },
+                { name: "maybe_address", type: "Option<Address>" }
+              ],
+              returnType: "OptionalData"
+            },
+            {
+              name: "get_admin_from_storage",
+              parameters: [],
+              returnType: "Result<Address, ContractError>"
+            }
+          ],
+          structs: [
+            {
+              name: "Data",
+              fields: [
+                { name: "admin", type: "Address", visibility: "pub" },
+                { name: "counter", type: "u32", visibility: "pub" },
+                { name: "message", type: "String", visibility: "pub" }
+              ]
+            },
+            {
+              name: "ComplexData",
+              fields: [
+                { name: "admin", type: "Address", visibility: "pub" },
+                { name: "data", type: "Data", visibility: "pub" },
+                { name: "bytes", type: "Bytes", visibility: "pub" },
+                { name: "bytes_n", type: "BytesN<32>", visibility: "pub" },
+                { name: "duration", type: "Duration", visibility: "pub" },
+                { name: "timepoint", type: "Timepoint", visibility: "pub" },
+                { name: "map", type: "Map<String, u32>", visibility: "pub" },
+                { name: "vec", type: "Vec<u32>", visibility: "pub" },
+                { name: "symbol", type: "Symbol", visibility: "pub" }
+              ]
+            },
+            {
+              name: "OptionalData",
+              fields: [
+                { name: "maybe_u32", type: "Option<u32>", visibility: "pub" },
+                { name: "maybe_address", type: "Option<Address>", visibility: "pub" }
+              ]
+            }
+          ],
+          enums: [
+            {
+              name: "DataKey",
+              variants: [
+                { name: "Admin" },
+                { name: "Counter" },
+                { name: "Data" },
+                { name: "Account", dataType: "Address" },
+                { name: "Contract", dataType: "(Address, u64)" }
+              ],
+              isError: false
+            },
+            {
+              name: "ContractError",
+              variants: [
+                { name: "AdminNotFound", value: 1 },
+                { name: "InvalidValue", value: 2 },
+                { name: "OptionNotFound", value: 3 }
+              ],
+              isError: true
+            }
+          ]
+        }, null, 2)
       }
     ]
     ```
 
+    ### Method Parameter Types
+
+    The parser supports various parameter and return types:
+
+    1. **Primitive Types**
+    ```rust
+    fn handle_primitives(value: u32, flag: bool) -> u64;
+    ```
+    Parsed as:
+    ```json
+    {
+      "name": "handle_primitives",
+      "parameters": [
+        { "name": "value", "type": "u32" },
+        { "name": "flag", "type": "bool" }
+      ],
+      "returnType": "u64"
+    }
+    ```
+
+    2. **Custom Struct Types**
+    ```rust
+    fn handle_struct(data: Data) -> Data;
+    ```
+    Parsed as:
+    ```json
+    {
+      "name": "handle_struct",
+      "parameters": [
+        { "name": "data", "type": "Data" }
+      ],
+      "returnType": "Data"
+    }
+    ```
+
+    3. **Collections**
+    ```rust
+    fn handle_collections(map: Map<String, u32>, vec: Vec<u32>) -> (Map<String, u32>, Vec<u32>);
+    ```
+    Parsed as:
+    ```json
+    {
+      "name": "handle_collections",
+      "parameters": [
+        { "name": "map", "type": "Map<String, u32>" },
+        { "name": "vec", "type": "Vec<u32>" }
+      ],
+      "returnType": "(Map<String, u32>, Vec<u32>)"
+    }
+    ```
+
+    4. **Optional Types**
+    ```rust
+    fn handle_optionals(maybe_u32: Option<u32>, maybe_address: Option<Address>) -> OptionalData;
+    ```
+    Parsed as:
+    ```json
+    {
+      "name": "handle_optionals",
+      "parameters": [
+        { "name": "maybe_u32", "type": "Option<u32>" },
+        { "name": "maybe_address", "type": "Option<Address>" }
+      ],
+      "returnType": "OptionalData"
+    }
+    ```
+
+    5. **Result Types**
+    ```rust
+    fn handle_result() -> Result<Address, ContractError>;
+    ```
+    Parsed as:
+    ```json
+    {
+      "name": "handle_result",
+      "parameters": [],
+      "returnType": "Result<Address, ContractError>"
+    }
+    ```
+
+    6. **Complex Types**
+    ```rust
+    fn handle_complex(data: ComplexData) -> (Data, ComplexData);
+    ```
+    Parsed as:
+    ```json
+    {
+      "name": "handle_complex",
+      "parameters": [
+        { "name": "data", "type": "ComplexData" }
+      ],
+      "returnType": "(Data, ComplexData)"
+    }
+    ```
 
 ## ⭐ Key Features
 
