@@ -46,9 +46,9 @@ export type CommandArgs =
   | ContractInterfaceArgs;
 
 export type CommandName =
-  | "find"
-  | "dir"
-  | "build"
-  | "optimize"
-  | "deploy"
-  | "contractInterface";
+  | 'find'
+  | 'dir'
+  | 'build'
+  | 'optimize'
+  | 'deploy'
+  | 'contractInterface';

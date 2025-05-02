@@ -5,7 +5,7 @@ import {
   ContractMethod,
   ContractParameter,
   ContractStruct,
-} from "../../interfaces/soroban/ContractInterface";
+} from '../../interfaces/soroban/ContractInterface';
 
 const REGEX_PATTERNS = {
   METHOD: /fn\s+(\w+)\s*\((.*?)\)(?:\s*->\s*(.*?))?;/,
@@ -51,7 +51,7 @@ export class ContractParser {
   }
 
   protected parseSource(source: string) {
-    const lines = source.split("\n").map((line) => line.trim());
+    const lines = source.split('\n').map((line) => line.trim());
 
     this.contractName = this.parseContractName(lines);
     this.contractMethods = this.parseContractMethods(lines);
@@ -60,39 +60,39 @@ export class ContractParser {
   }
 
   private parseContractName(line: string[]): string {
-    const contractNameLine = line.find((line) => line.startsWith("pub trait"));
+    const contractNameLine = line.find((line) => line.startsWith('pub trait'));
 
     if (contractNameLine) {
       const contractName = contractNameLine
-        .split("pub trait ")[1]
-        .split(" {")[0];
+        .split('pub trait ')[1]
+        .split(' {')[0];
 
       return contractName;
     }
 
-    return "DefaultContractName";
+    return 'DefaultContractName';
   }
 
   private parseContractMethods(lines: string[]): ContractMethod[] {
-    return this.collectLines(lines, "fn", ";", (methodLines) =>
+    return this.collectLines(lines, 'fn', ';', (methodLines) =>
       this.parseMethodLines(methodLines),
     );
   }
 
   private parseContractStructs(lines: string[]): ContractStruct[] {
-    return this.collectLines(lines, "pub struct", "}", (structLines) =>
+    return this.collectLines(lines, 'pub struct', '}', (structLines) =>
       this.parseStructLines(structLines),
     );
   }
 
   private parseContractEnums(lines: string[]): ContractEnum[] {
-    return this.collectLines(lines, "pub enum", "}", (enumLines) =>
+    return this.collectLines(lines, 'pub enum', '}', (enumLines) =>
       this.parseEnumLines(enumLines),
     );
   }
 
   private parseMethodLines(lines: string[]): ContractMethod | null {
-    const methodText = lines.join(" ");
+    const methodText = lines.join(' ');
     const methodMatch = methodText.match(REGEX_PATTERNS.METHOD);
 
     if (!methodMatch) {
@@ -108,18 +108,18 @@ export class ContractParser {
       returnType:
         returnType
           ?.split(REGEX_PATTERNS.SOROBAN_PREFIX)
-          ?.join("")
-          ?.split(", ")
+          ?.join('')
+          ?.split(', ')
           ?.filter((e) => e?.trim())
           ?.map((e) => e?.trim())
-          ?.join(", ") || "()",
+          ?.join(', ') || '()',
     };
   }
 
   private parseParameters(paramsText: string): ContractParameter[] {
     return this.parseCommaSeparatedItems(paramsText, (paramText) => {
-      const [name, type] = paramText.split(":").map((s) => s.trim());
-      if (name && type && type !== "Env") {
+      const [name, type] = paramText.split(':').map((s) => s.trim());
+      if (name && type && type !== 'Env') {
         return { name, type };
       }
       return null;
@@ -127,7 +127,7 @@ export class ContractParser {
   }
 
   private parseStructLines(lines: string[]): ContractStruct | null {
-    const structText = lines.join(" ");
+    const structText = lines.join(' ');
     const structMatch = structText.match(REGEX_PATTERNS.STRUCT);
 
     if (!structMatch) {
@@ -153,23 +153,23 @@ export class ContractParser {
     });
   }
 
-  private parseField(fieldText: string): ["pub" | "private", string, string] {
-    const parts = fieldText.trim().split(":");
+  private parseField(fieldText: string): ['pub' | 'private', string, string] {
+    const parts = fieldText.trim().split(':');
     if (parts.length !== 2) {
-      return ["private", "", ""];
+      return ['private', '', ''];
     }
 
     const [visibilityAndName, type] = parts.map((s) => s.trim());
-    const visibility: "pub" | "private" = visibilityAndName.startsWith("pub")
-      ? "pub"
-      : "private";
-    const name = visibilityAndName.replace("pub", "").trim();
+    const visibility: 'pub' | 'private' = visibilityAndName.startsWith('pub')
+      ? 'pub'
+      : 'private';
+    const name = visibilityAndName.replace('pub', '').trim();
 
     return [visibility, name, type];
   }
 
   private parseEnumLines(lines: string[]): ContractEnum | null {
-    const enumText = lines.join(" ");
+    const enumText = lines.join(' ');
     const enumMatch = enumText.match(REGEX_PATTERNS.ENUM);
 
     if (!enumMatch) {
@@ -179,8 +179,8 @@ export class ContractParser {
     const [, name, variantsText] = enumMatch;
     const variants = this.parseEnumVariants(variantsText);
     const isError =
-      enumText.includes("#[contracterror]") ||
-      enumText.includes("#[soroban_sdk::contracterror");
+      enumText.includes('#[contracterror]') ||
+      enumText.includes('#[soroban_sdk::contracterror');
 
     return { name, variants, isError };
   }
@@ -193,8 +193,8 @@ export class ContractParser {
         return null;
       }
 
-      if (variantText.includes("=")) {
-        const [name, value] = variantText.split("=").map((s) => s.trim());
+      if (variantText.includes('=')) {
+        const [name, value] = variantText.split('=').map((s) => s.trim());
         return {
           name,
           value: parseInt(value, 10),
@@ -205,7 +205,7 @@ export class ContractParser {
       if (match) {
         const [, name, dataType] = match;
         const cleanDataType = dataType
-          .replace(REGEX_PATTERNS.SOROBAN_PREFIX, "")
+          .replace(REGEX_PATTERNS.SOROBAN_PREFIX, '')
           .trim();
 
         return {
@@ -272,24 +272,24 @@ export class ContractParser {
       return [];
     }
 
-    const cleanText = text.replace(REGEX_PATTERNS.SOROBAN_PREFIX, "");
+    const cleanText = text.replace(REGEX_PATTERNS.SOROBAN_PREFIX, '');
     const items: T[] = [];
-    let currentItem = "";
+    let currentItem = '';
     let bracketCount = 0;
 
     for (const char of cleanText) {
-      if (char === "<" || char === "(") {
+      if (char === '<' || char === '(') {
         bracketCount++;
-      } else if (char === ">" || char === ")") {
+      } else if (char === '>' || char === ')') {
         bracketCount--;
       }
 
-      if (char === "," && bracketCount === 0) {
+      if (char === ',' && bracketCount === 0) {
         const item = parseItem(currentItem.trim());
         if (item) {
           items.push(item);
         }
-        currentItem = "";
+        currentItem = '';
       } else {
         currentItem += char;
       }

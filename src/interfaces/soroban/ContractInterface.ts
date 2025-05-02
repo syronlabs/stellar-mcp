@@ -17,7 +17,7 @@ export interface ContractStruct {
 export interface ContractField {
   name: string;
   type: string;
-  visibility: "pub" | "private";
+  visibility: 'pub' | 'private';
 }
 
 export interface ContractEnum {
