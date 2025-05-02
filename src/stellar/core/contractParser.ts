@@ -22,6 +22,10 @@ export class ContractParser {
   private contractStructs: IContractStruct[] = [];
   private contractEnums: IContractEnum[] = [];
 
+  private static readonly OPEN_BRACKETS = new Set(['<', '(']);
+  private static readonly CLOSE_BRACKETS = new Set(['>', ')']);
+  private static readonly COMMA = ',';
+
   constructor(protected readonly source: string) {
     this.parseSource(source);
   }
@@ -225,34 +229,33 @@ export class ContractParser {
     parseLines: (lines: string[]) => T | null,
   ): T[] {
     const items: T[] = [];
-    let isCollecting = false;
-    let collectedLines: string[] = [];
+    let collectedLines: string[] | null = null;
 
     for (const line of lines) {
-      if (line.trim().startsWith(startPattern)) {
-        if (isCollecting) {
+      const trimmed = line.trim();
+
+      if (trimmed.startsWith(startPattern)) {
+        if (collectedLines) {
           const item = parseLines(collectedLines);
           if (item) {
             items.push(item);
           }
           collectedLines = [];
         }
-        isCollecting = true;
+        collectedLines = [line];
+      } else if (collectedLines) {
         collectedLines.push(line);
-      } else if (isCollecting) {
-        collectedLines.push(line);
-        if (line.trim() === endPattern) {
+        if (trimmed === endPattern) {
           const item = parseLines(collectedLines);
           if (item) {
             items.push(item);
           }
-          collectedLines = [];
-          isCollecting = false;
+          collectedLines = null;
         }
       }
     }
 
-    if (isCollecting && collectedLines.length > 0) {
+    if (collectedLines) {
       const item = parseLines(collectedLines);
       if (item) {
         items.push(item);
@@ -266,40 +269,44 @@ export class ContractParser {
     text: string,
     parseItem: (item: string) => T | null,
   ): T[] {
-    if (!text.trim()) {
+    const cleanText = text.replace(REGEX_PATTERNS.SOROBAN_PREFIX, '').trim();
+    if (!cleanText) {
       return [];
     }
 
-    const cleanText = text.replace(REGEX_PATTERNS.SOROBAN_PREFIX, '');
     const items: T[] = [];
     let currentItem = '';
     let bracketCount = 0;
 
     for (const char of cleanText) {
-      if (char === '<' || char === '(') {
-        bracketCount++;
-      } else if (char === '>' || char === ')') {
-        bracketCount--;
-      }
+      if (ContractParser.OPEN_BRACKETS.has(char)) bracketCount++;
+      else if (ContractParser.CLOSE_BRACKETS.has(char)) bracketCount--;
 
-      if (char === ',' && bracketCount === 0) {
-        const item = parseItem(currentItem.trim());
-        if (item) {
-          items.push(item);
-        }
+      if (char === ContractParser.COMMA && bracketCount === 0) {
+        this.pushParsedItem(currentItem, parseItem, items);
         currentItem = '';
       } else {
         currentItem += char;
       }
     }
 
-    if (currentItem.trim()) {
-      const item = parseItem(currentItem.trim());
-      if (item) {
-        items.push(item);
-      }
-    }
-
+    this.pushParsedItem(currentItem, parseItem, items);
     return items;
+  }
+
+  private pushParsedItem<T>(
+    raw: string,
+    parseItem: (item: string) => T | null,
+    items: T[],
+  ) {
+    const trimmed = raw.trim();
+
+    if (!trimmed) return;
+
+    const item = parseItem(trimmed);
+
+    if (item) {
+      items.push(item);
+    }
   }
 }
