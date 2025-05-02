@@ -1,4 +1,5 @@
-export interface GetContractMethodsArgs {
-  contractAddress: string;
-  secretKey: string;
-}
+import { z } from 'zod';
+
+import { GetContractMethodsSchema } from '../../stellar/soroban/schemas';
+
+export type IGetContractMethodsArgs = z.infer<typeof GetContractMethodsSchema>;

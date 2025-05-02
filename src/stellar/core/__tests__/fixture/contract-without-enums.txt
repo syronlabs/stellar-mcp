@@ -1,0 +1,102 @@
+#[soroban_sdk::contractclient(name = "Client")]
+pub trait Contract {
+    fn __constructor(env: soroban_sdk::Env, admin: soroban_sdk::Address);
+    fn set_admin(env: soroban_sdk::Env, admin: soroban_sdk::Address);
+    fn get_admin(env: soroban_sdk::Env) -> soroban_sdk::Address;
+    fn get_admin_from_storage(
+        env: soroban_sdk::Env,
+    ) -> Result<soroban_sdk::Address, ContractError>;
+    fn method_with_args(env: soroban_sdk::Env, arg1: u32, arg2: u32) -> (u32, u32);
+    fn struct_as_arg(env: soroban_sdk::Env, arg: Data) -> Data;
+    fn struct_as_arg_deep(env: soroban_sdk::Env, arg: DeepData2) -> DeepData2;
+    fn handle_integers(
+        env: soroban_sdk::Env,
+        i32_val: i32,
+        i64_val: i64,
+        i128_val: i128,
+        i256_val: soroban_sdk::I256,
+        u32_val: u32,
+        u64_val: u64,
+        u128_val: u128,
+        u256_val: soroban_sdk::U256,
+    ) -> (i32, u32);
+    fn handle_strings(
+        env: soroban_sdk::Env,
+        str_val: soroban_sdk::String,
+        bytes_val: soroban_sdk::Bytes,
+        bytes_n_val: soroban_sdk::BytesN<32>,
+    ) -> soroban_sdk::String;
+    fn handle_time(
+        env: soroban_sdk::Env,
+        duration: soroban_sdk::Duration,
+        timepoint: soroban_sdk::Timepoint,
+    ) -> (soroban_sdk::Duration, soroban_sdk::Timepoint);
+    fn handle_collections(
+        env: soroban_sdk::Env,
+        map: soroban_sdk::Map<soroban_sdk::String, u32>,
+        vec: soroban_sdk::Vec<u32>,
+    ) -> (soroban_sdk::Map<soroban_sdk::String, u32>, soroban_sdk::Vec<u32>);
+    fn handle_custom_types(
+        env: soroban_sdk::Env,
+        data: Data,
+        complex_data: ComplexData,
+    ) -> (Data, ComplexData);
+    fn handle_optionals(
+        env: soroban_sdk::Env,
+        maybe_u32: Option<u32>,
+        maybe_address: Option<soroban_sdk::Address>,
+    ) -> OptionalData;
+    fn handle_mixed(
+        env: soroban_sdk::Env,
+        address: soroban_sdk::Address,
+        symbol: soroban_sdk::Symbol,
+        val: soroban_sdk::Val,
+        data: Data,
+        maybe_u32: Option<u32>,
+    ) -> (
+        soroban_sdk::Address,
+        soroban_sdk::Symbol,
+        soroban_sdk::Val,
+        Data,
+        Option<u32>,
+    );
+    fn set_data(env: soroban_sdk::Env, data: Data);
+    fn get_data(env: soroban_sdk::Env) -> Result<Data, ContractError>;
+    fn handle_errors(
+        env: soroban_sdk::Env,
+        should_error: bool,
+    ) -> Result<u32, ContractError>;
+}
+#[soroban_sdk::contracttype(export = false)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Data {
+    pub admin: soroban_sdk::Address,
+    pub counter: u32,
+    pub message: soroban_sdk::String,
+}
+#[soroban_sdk::contracttype(export = false)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct DeepData2 {
+    pub admin: soroban_sdk::Address,
+    pub complex: ComplexData,
+    pub data: Data,
+}
+#[soroban_sdk::contracttype(export = false)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct ComplexData {
+    pub admin: soroban_sdk::Address,
+    pub bytes: soroban_sdk::Bytes,
+    pub bytes_n: soroban_sdk::BytesN<32>,
+    pub data: Data,
+    pub duration: soroban_sdk::Duration,
+    pub map: soroban_sdk::Map<soroban_sdk::String, u32>,
+    pub symbol: soroban_sdk::Symbol,
+    pub timepoint: soroban_sdk::Timepoint,
+    pub vec: soroban_sdk::Vec<u32>,
+}
+#[soroban_sdk::contracttype(export = false)]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct OptionalData {
+    pub maybe_address: Option<soroban_sdk::Address>,
+    pub maybe_u32: Option<u32>,
+}
