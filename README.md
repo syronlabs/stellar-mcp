@@ -167,6 +167,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Provides complete contract interface including methods, structs, and enums
     - Handles complex data types and nested structures
     - Returns a structured JSON representation of the contract interface
+    - Automatically filters out the `env` parameter from method signatures (provided by the Soroban blockchain)
     - Supports various enum types:
       - Simple enums (no associated data)
       - C-style enums (with numeric values)
@@ -199,6 +200,26 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
         text: JSON.stringify({
           name: "Contract",
           methods: [
+            {
+              name: "set_admin",
+              parameters: [
+                { name: "admin", type: "Address" }
+              ],
+              returnType: "()"
+            },
+            {
+              name: "get_admin",
+              parameters: [],
+              returnType: "Address"
+            },
+            {
+              name: "method_with_args",
+              parameters: [
+                { name: "arg1", type: "u32" },
+                { name: "arg2", type: "u32" }
+              ],
+              returnType: "(u32, u32)"
+            },
             {
               name: "handle_integers",
               parameters: [
@@ -269,10 +290,10 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
                 { name: "bytes", type: "Bytes", visibility: "pub" },
                 { name: "bytes_n", type: "BytesN<32>", visibility: "pub" },
                 { name: "duration", type: "Duration", visibility: "pub" },
-                { name: "timepoint", type: "Timepoint", visibility: "pub" },
                 { name: "map", type: "Map<String, u32>", visibility: "pub" },
-                { name: "vec", type: "Vec<u32>", visibility: "pub" },
-                { name: "symbol", type: "Symbol", visibility: "pub" }
+                { name: "symbol", type: "Symbol", visibility: "pub" },
+                { name: "timepoint", type: "Timepoint", visibility: "pub" },
+                { name: "vec", type: "Vec<u32>", visibility: "pub" }
               ]
             },
             {
@@ -312,7 +333,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
 
     ### Method Parameter Types
 
-    The parser supports various parameter and return types:
+    The parser supports various parameter and return types. Note that the `env` parameter is automatically filtered out from the interface as it is provided by the Soroban blockchain environment.
 
     1. **Primitive Types**
     ```rust
@@ -402,6 +423,23 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
         { "name": "data", "type": "ComplexData" }
       ],
       "returnType": "(Data, ComplexData)"
+    }
+    ```
+
+    ### Note About the Env Parameter
+
+    All contract methods in Soroban receive an `env` parameter that provides access to the blockchain environment. This parameter is automatically provided by the Soroban blockchain and is filtered out from the interface. For example, a method defined as:
+    ```rust
+    fn set_admin(env: Env, admin: Address) -> ();
+    ```
+    Will appear in the interface as:
+    ```json
+    {
+      "name": "set_admin",
+      "parameters": [
+        { "name": "admin", "type": "Address" }
+      ],
+      "returnType": "()"
     }
     ```
 
