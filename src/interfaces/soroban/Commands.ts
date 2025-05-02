@@ -25,7 +25,6 @@ export interface DeployCommandArgs {
 
 export interface ContractInterfaceArgs {
   contractId: string;
-  secretKey: string;
   network?: string;
 }
 

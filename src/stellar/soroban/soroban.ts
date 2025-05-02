@@ -267,12 +267,11 @@ export class Soroban extends Core {
     params: GetContractMethodsArgs,
   ): Promise<OutputMessage[]> {
     try {
-      const { contractAddress, secretKey } = params;
+      const { contractAddress } = params;
       const messages = this.createInitialMessage(contractAddress);
 
       const contractInterface = await this.getContractInterface(
         contractAddress,
-        secretKey,
       );
 
       messages.push({
@@ -308,12 +307,10 @@ export class Soroban extends Core {
 
   private async getContractInterface(
     contractAddress: string,
-    secretKey: string,
   ): Promise<ContractInterface> {
     const command = this.getCommand("contractInterface", {
       contractId: contractAddress,
       network: this.network,
-      secretKey,
     });
 
     return new Promise<ContractInterface>((resolve) => {

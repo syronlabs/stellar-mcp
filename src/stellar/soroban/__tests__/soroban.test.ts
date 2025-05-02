@@ -202,7 +202,6 @@ describe("Soroban Operations", () => {
       const contractAddress = getContractAddress(deployResult);
       const result = await soroban.retrieveContractMethods({
         contractAddress,
-        secretKey: testAccount.secretKey,
       });
 
       expect(result).toBeDefined();
@@ -255,7 +254,6 @@ describe("Soroban Operations", () => {
 
       const result = await soroban.retrieveContractMethods({
         contractAddress,
-        secretKey: testAccount.secretKey,
       });
 
       expect(result).toBeDefined();
