@@ -1,4 +1,4 @@
-import { Networks, rpc } from "@stellar/stellar-sdk";
+import { Networks, rpc } from '@stellar/stellar-sdk';
 
 function getNetworkConfig(serverUrl: string): {
   [key: string]: {

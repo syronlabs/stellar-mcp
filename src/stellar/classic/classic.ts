@@ -1,51 +1,57 @@
 import {
+  Asset,
+  Claimant,
   Horizon,
   Keypair,
-  Asset,
+  Networks,
   Operation,
   TransactionBuilder,
-  Networks,
-  Claimant,
-  xdr
-} from "@stellar/stellar-sdk";
+  xdr,
+} from '@stellar/stellar-sdk';
 import { z } from 'zod';
+
 import {
   AccountKeyPairSchema,
-  BalanceSchema,
-  PaymentParamsSchema,
   AssetParamsSchema,
-  TrustlineParamsSchema,
-  TransactionSchema,
-  FundbotResponseSchema,
   AssetSchema,
-  CreateClaimableBalanceParamsSchema,
+  BalanceSchema,
   ClaimClaimableBalanceParamsSchema,
-  ClaimPredicateSchema
+  ClaimPredicateSchema,
+  CreateClaimableBalanceParamsSchema,
+  FundbotResponseSchema,
+  PaymentParamsSchema,
+  TransactionSchema,
+  TrustlineParamsSchema,
 } from './schemas.js';
 
 export class Classic {
   private server: Horizon.Server;
   private networkPassphrase: string;
-  private networkConfig: { [key: string]: { server: Horizon.Server; networkPassphrase: string } };
+  private networkConfig: {
+    [key: string]: { server: Horizon.Server; networkPassphrase: string };
+  };
 
   constructor(serverUrl: string) {
     this.networkConfig = {
       testnet: {
         server: new Horizon.Server(serverUrl, { allowHttp: true }),
-        networkPassphrase: Networks.TESTNET
+        networkPassphrase: Networks.TESTNET,
       },
       public: {
         server: new Horizon.Server(serverUrl, { allowHttp: true }),
-        networkPassphrase: Networks.PUBLIC
+        networkPassphrase: Networks.PUBLIC,
       },
       futurenet: {
         server: new Horizon.Server(serverUrl, { allowHttp: true }),
-        networkPassphrase: Networks.FUTURENET
-      }
+        networkPassphrase: Networks.FUTURENET,
+      },
     };
 
-    const network = serverUrl.includes('testnet') ? 'testnet' :
-      serverUrl.includes('futurenet') ? 'futurenet' : 'public';
+    const network = serverUrl.includes('testnet')
+      ? 'testnet'
+      : serverUrl.includes('futurenet')
+        ? 'futurenet'
+        : 'public';
     const config = this.networkConfig[network];
     this.server = config.server;
     this.networkPassphrase = config.networkPassphrase;
@@ -56,28 +62,39 @@ export class Classic {
       const keypair = Keypair.random();
       return {
         publicKey: keypair.publicKey(),
-        secretKey: keypair.secret()
+        secretKey: keypair.secret(),
       };
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
-  async getBalance(params: { account: string }): Promise<z.infer<typeof BalanceSchema>[]> {
+  async getBalance(params: {
+    account: string;
+  }): Promise<z.infer<typeof BalanceSchema>[]> {
     try {
       const { account } = params;
       const { balances } = await this.server.loadAccount(account);
       return BalanceSchema.array().parse(balances);
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
-  async createPayment(params: z.infer<typeof PaymentParamsSchema>): Promise<z.infer<typeof TransactionSchema>> {
+  async createPayment(
+    params: z.infer<typeof PaymentParamsSchema>,
+  ): Promise<z.infer<typeof TransactionSchema>> {
     try {
-      const { destination, amount, asset, secretKey } = PaymentParamsSchema.parse(params);
+      const { destination, amount, asset, secretKey } =
+        PaymentParamsSchema.parse(params);
       const sourceKeypair = Keypair.fromSecret(secretKey);
-      const sourceAccount = await this.server.loadAccount(sourceKeypair.publicKey());
+      const sourceAccount = await this.server.loadAccount(
+        sourceKeypair.publicKey(),
+      );
 
       const paymentAsset = asset
         ? new Asset(asset.code, asset.issuer)
@@ -92,7 +109,7 @@ export class Classic {
             destination,
             asset: paymentAsset,
             amount,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
@@ -102,11 +119,15 @@ export class Classic {
       const result = await this.server.submitTransaction(transaction);
       return TransactionSchema.parse(result);
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
-  async getTransactions(params: { account: string }): Promise<z.infer<typeof TransactionSchema>[]> {
+  async getTransactions(params: {
+    account: string;
+  }): Promise<z.infer<typeof TransactionSchema>[]> {
     try {
       const { account } = params;
       const { records } = await this.server
@@ -115,7 +136,9 @@ export class Classic {
         .call();
       return TransactionSchema.array().parse(records);
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
@@ -124,12 +147,15 @@ export class Classic {
     transaction: z.infer<typeof TransactionSchema>;
   }> {
     try {
-      const { code, issuerSecretKey, distributorSecretKey, totalSupply } = AssetParamsSchema.parse(params);
+      const { code, issuerSecretKey, distributorSecretKey, totalSupply } =
+        AssetParamsSchema.parse(params);
 
       const issuerKeypair = Keypair.fromSecret(issuerSecretKey);
       const distributorKeypair = Keypair.fromSecret(distributorSecretKey);
 
-      const issuerAccount = await this.server.loadAccount(issuerKeypair.publicKey());
+      const issuerAccount = await this.server.loadAccount(
+        issuerKeypair.publicKey(),
+      );
 
       const asset = new Asset(code, issuerKeypair.publicKey());
 
@@ -142,14 +168,14 @@ export class Classic {
             asset,
             limit: totalSupply,
             source: distributorKeypair.publicKey(),
-          })
+          }),
         )
         .addOperation(
           Operation.payment({
             destination: distributorKeypair.publicKey(),
             asset,
             amount: totalSupply,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
@@ -162,14 +188,18 @@ export class Classic {
           code,
           issuer: issuerKeypair.publicKey(),
         },
-        transaction: TransactionSchema.parse(result)
+        transaction: TransactionSchema.parse(result),
       };
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
-  async changeTrust(params: z.infer<typeof TrustlineParamsSchema>): Promise<z.infer<typeof TransactionSchema>> {
+  async changeTrust(
+    params: z.infer<typeof TrustlineParamsSchema>,
+  ): Promise<z.infer<typeof TransactionSchema>> {
     try {
       const { asset, limit, secretKey } = TrustlineParamsSchema.parse(params);
       const accountKeypair = Keypair.fromSecret(secretKey);
@@ -185,7 +215,7 @@ export class Classic {
           Operation.changeTrust({
             asset: stellarAsset,
             limit,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
@@ -195,35 +225,50 @@ export class Classic {
       const result = await this.server.submitTransaction(transaction);
       return TransactionSchema.parse(result);
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
-  async fundAccount(params: { publicKey: string }): Promise<z.infer<typeof FundbotResponseSchema>> {
+  async fundAccount(params: {
+    publicKey: string;
+  }): Promise<z.infer<typeof FundbotResponseSchema>> {
     try {
       const { publicKey } = params;
       const response = await this.server.friendbot(publicKey).call();
       return FundbotResponseSchema.parse({
         success: true,
-        transaction: response
+        transaction: response,
       });
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
-  async createClaimableBalance(params: z.infer<typeof CreateClaimableBalanceParamsSchema>): Promise<z.infer<typeof TransactionSchema>> {
+  async createClaimableBalance(
+    params: z.infer<typeof CreateClaimableBalanceParamsSchema>,
+  ): Promise<z.infer<typeof TransactionSchema>> {
     try {
-      const { asset, amount, claimants, secretKey } = CreateClaimableBalanceParamsSchema.parse(params);
+      const { asset, amount, claimants, secretKey } =
+        CreateClaimableBalanceParamsSchema.parse(params);
       const sourceKeypair = Keypair.fromSecret(secretKey);
-      const sourceAccount = await this.server.loadAccount(sourceKeypair.publicKey());
+      const sourceAccount = await this.server.loadAccount(
+        sourceKeypair.publicKey(),
+      );
 
       const claimableAsset = asset
         ? new Asset(asset.code, asset.issuer)
         : Asset.native();
 
-      const stellarClaimants = claimants.map(claimant =>
-        new Claimant(claimant.destination, this.buildPredicate(claimant.predicate))
+      const stellarClaimants = claimants.map(
+        (claimant) =>
+          new Claimant(
+            claimant.destination,
+            this.buildPredicate(claimant.predicate),
+          ),
       );
 
       const transaction = new TransactionBuilder(sourceAccount, {
@@ -235,7 +280,7 @@ export class Classic {
             asset: claimableAsset,
             amount,
             claimants: stellarClaimants,
-          })
+          }),
         )
         .setTimeout(30)
         .build();
@@ -245,40 +290,55 @@ export class Classic {
       const result = await this.server.submitTransaction(transaction);
       return TransactionSchema.parse(result);
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 
-  private buildPredicate(predicate: z.infer<typeof ClaimPredicateSchema>): xdr.ClaimPredicate {
+  private buildPredicate(
+    predicate: z.infer<typeof ClaimPredicateSchema>,
+  ): xdr.ClaimPredicate {
     switch (predicate.type) {
       case 'UNCONDITIONAL':
         return xdr.ClaimPredicate.claimPredicateUnconditional();
       case 'BEFORE_RELATIVE_TIME':
-        return xdr.ClaimPredicate.claimPredicateBeforeRelativeTime(new xdr.Int64(predicate.value));
+        return xdr.ClaimPredicate.claimPredicateBeforeRelativeTime(
+          new xdr.Int64(predicate.value),
+        );
       case 'BEFORE_ABSOLUTE_TIME':
-        return xdr.ClaimPredicate.claimPredicateBeforeAbsoluteTime(new xdr.Int64(predicate.value));
+        return xdr.ClaimPredicate.claimPredicateBeforeAbsoluteTime(
+          new xdr.Int64(predicate.value),
+        );
       case 'NOT':
-        return xdr.ClaimPredicate.claimPredicateNot(this.buildPredicate(predicate.value[0]));
+        return xdr.ClaimPredicate.claimPredicateNot(
+          this.buildPredicate(predicate.value[0]),
+        );
       case 'AND':
         return xdr.ClaimPredicate.claimPredicateAnd([
           this.buildPredicate(predicate.value[0]),
-          this.buildPredicate(predicate.value[1])
+          this.buildPredicate(predicate.value[1]),
         ]);
       case 'OR':
         return xdr.ClaimPredicate.claimPredicateOr([
           this.buildPredicate(predicate.value[0]),
-          this.buildPredicate(predicate.value[1])
+          this.buildPredicate(predicate.value[1]),
         ]);
       default:
         throw new Error('Invalid predicate type');
     }
   }
 
-  async claimClaimableBalance(params: z.infer<typeof ClaimClaimableBalanceParamsSchema>): Promise<z.infer<typeof TransactionSchema>> {
+  async claimClaimableBalance(
+    params: z.infer<typeof ClaimClaimableBalanceParamsSchema>,
+  ): Promise<z.infer<typeof TransactionSchema>> {
     try {
-      const { balanceId, secretKey } = ClaimClaimableBalanceParamsSchema.parse(params);
+      const { balanceId, secretKey } =
+        ClaimClaimableBalanceParamsSchema.parse(params);
       const sourceKeypair = Keypair.fromSecret(secretKey);
-      const sourceAccount = await this.server.loadAccount(sourceKeypair.publicKey());
+      const sourceAccount = await this.server.loadAccount(
+        sourceKeypair.publicKey(),
+      );
 
       const transaction = new TransactionBuilder(sourceAccount, {
         fee: (await this.server.fetchBaseFee()).toString(),
@@ -286,8 +346,8 @@ export class Classic {
       })
         .addOperation(
           Operation.claimClaimableBalance({
-            balanceId
-          })
+            balanceId,
+          }),
         )
         .setTimeout(30)
         .build();
@@ -297,7 +357,9 @@ export class Classic {
       const result = await this.server.submitTransaction(transaction);
       return TransactionSchema.parse(result);
     } catch (error) {
-      throw new Error(error instanceof Error ? error.message : "Unknown error occurred");
+      throw new Error(
+        error instanceof Error ? error.message : 'Unknown error occurred',
+      );
     }
   }
 }

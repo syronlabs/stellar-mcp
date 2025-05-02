@@ -1,12 +1,12 @@
-import { rpc } from "@stellar/stellar-sdk";
-import { exec } from "child_process";
+import { rpc } from '@stellar/stellar-sdk';
+import { exec } from 'child_process';
 
-import getNetworkConfig from "../../config/environment.config.js";
-import { OutputMessage, Platform } from "../../interfaces/common.interface.js";
-import { DeployContractArgs } from "../../interfaces/soroban/DeployContractArgs.js";
-import { ConstructorArg } from "../../interfaces/soroban/DeployContractArgs.js";
-import { GetContractMethodsArgs } from "../../interfaces/soroban/GetContractMethods.js";
-import { Core } from "../core/core.js";
+import getNetworkConfig from '../../config/environment.config.js';
+import { OutputMessage, Platform } from '../../interfaces/common.interface.js';
+import { DeployContractArgs } from '../../interfaces/soroban/DeployContractArgs.js';
+import { ConstructorArg } from '../../interfaces/soroban/DeployContractArgs.js';
+import { GetContractMethodsArgs } from '../../interfaces/soroban/GetContractMethods.js';
+import { Core } from '../core/core.js';
 
 export class Soroban extends Core {
   private server: rpc.Server;
@@ -23,11 +23,11 @@ export class Soroban extends Core {
     super();
     this.networkConfig = getNetworkConfig(serverUrl);
 
-    const network = serverUrl.includes("testnet")
-      ? "testnet"
-      : serverUrl.includes("futurenet")
-        ? "futurenet"
-        : "public";
+    const network = serverUrl.includes('testnet')
+      ? 'testnet'
+      : serverUrl.includes('futurenet')
+        ? 'futurenet'
+        : 'public';
     const config = this.networkConfig[network];
     this.server = config.server;
     this.networkPassphrase = config.networkPassphrase;
@@ -38,15 +38,15 @@ export class Soroban extends Core {
     contractPath: string,
   ): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve) => {
-      const command = this.getCommand("build", { path: contractPath });
+      const command = this.getCommand('build', { path: contractPath });
       exec(command, (error, stdout, stderr) => {
         if (error) {
-          console.error("Error:", error);
+          console.error('Error:', error);
           if (
             this.platform !== Platform.WINDOWS &&
-            !stderr.includes("could not find `Cargo.toml`")
+            !stderr.includes('could not find `Cargo.toml`')
           ) {
-            stderr = "The system cannot find the path specified";
+            stderr = 'The system cannot find the path specified';
           }
 
           resolve({ stdout, stderr });
@@ -59,22 +59,22 @@ export class Soroban extends Core {
 
   private async findWasmFiles(wasmDir: string): Promise<string[]> {
     return new Promise((resolve, reject) => {
-      const findCommand = this.getCommand("find", {
+      const findCommand = this.getCommand('find', {
         path: wasmDir,
-        pattern: "*.wasm",
+        pattern: '*.wasm',
       });
 
       exec(findCommand, (error, stdout, stderr) => {
         if (error) {
-          console.error("Error finding WASM files:", error);
+          console.error('Error finding WASM files:', error);
           reject(error);
           return;
         }
 
         const wasmFiles = stdout
           .trim()
-          .split("\n")
-          .filter((file) => file.endsWith(".wasm"));
+          .split('\n')
+          .filter((file) => file.endsWith('.wasm'));
 
         resolve(wasmFiles);
       });
@@ -95,7 +95,7 @@ export class Soroban extends Core {
           ? `target/wasm32-unknown-unknown/release/${wasmFile}`
           : wasmFile;
 
-      const optimizeCommand = this.getCommand("optimize", {
+      const optimizeCommand = this.getCommand('optimize', {
         wasmPath,
         contractPath,
       });
@@ -105,7 +105,7 @@ export class Soroban extends Core {
           console.error(`Error optimizing ${wasmFile}:`, error);
           resolve({
             file: wasmFile,
-            stdout: "",
+            stdout: '',
             stderr: `Error optimizing ${wasmFile}: ${error.message || error}`,
           });
           return;
@@ -125,8 +125,8 @@ export class Soroban extends Core {
     contractPath: string,
   ): Array<{ type: string; text: string }> {
     const messages: Array<{ type: string; text: string }> = [
-      { type: "text", text: "🚀 Starting contract build process..." },
-      { type: "text", text: `📦 Building contract in: ${contractPath}` },
+      { type: 'text', text: '🚀 Starting contract build process...' },
+      { type: 'text', text: `📦 Building contract in: ${contractPath}` },
       ...this.formatStdoutOutput(stdout),
       ...this.formatStderrOutput(stderr),
     ];
@@ -138,7 +138,7 @@ export class Soroban extends Core {
     results: Array<{ file: string; stdout: string; stderr: string }>,
   ): Array<{ type: string; text: string }> {
     return results.map((result) => ({
-      type: "text",
+      type: 'text',
       text: `🔧 Optimizing ${this.getBasePath(result.file)}\n${result.stdout}\n${result.stderr}`,
     }));
   }
@@ -153,7 +153,7 @@ export class Soroban extends Core {
 
       const wasmDir = this.resolvePath(
         contractPath,
-        "target/wasm32-unknown-unknown/release",
+        'target/wasm32-unknown-unknown/release',
       );
       if (!this.exists(wasmDir)) {
         const messages = this.formatBuildOutput(
@@ -163,13 +163,13 @@ export class Soroban extends Core {
         ) as OutputMessage[];
 
         messages.push({
-          type: "text",
-          text: "❌ Error: No WASM directory found after build",
+          type: 'text',
+          text: '❌ Error: No WASM directory found after build',
         });
 
         messages.push({
-          type: "text",
-          text: "💡 Tip: Check if the build process completed successfully",
+          type: 'text',
+          text: '💡 Tip: Check if the build process completed successfully',
         });
 
         return messages;
@@ -184,13 +184,13 @@ export class Soroban extends Core {
         ) as OutputMessage[];
 
         messages.push({
-          type: "text",
-          text: "❌ No WASM files found to optimize",
+          type: 'text',
+          text: '❌ No WASM files found to optimize',
         });
 
         messages.push({
-          type: "text",
-          text: "💡 Tip: Check if the build process generated any WASM files",
+          type: 'text',
+          text: '💡 Tip: Check if the build process generated any WASM files',
         });
 
         return messages;
@@ -200,7 +200,7 @@ export class Soroban extends Core {
         wasmFiles.map((file) =>
           this.optimizeWasmFile(contractPath, file).catch((error) => ({
             file,
-            stdout: "",
+            stdout: '',
             stderr: `Error optimizing ${file}: ${error.message || error}`,
           })),
         ),
@@ -213,7 +213,7 @@ export class Soroban extends Core {
       ) as OutputMessage[];
 
       messages.push({
-        type: "text",
+        type: 'text',
         text: `✨ Found ${optimizationResults.length} WASM file(s) to optimize`,
       });
 
@@ -224,15 +224,15 @@ export class Soroban extends Core {
       );
 
       messages.push({
-        type: "text",
-        text: optimizationResults.some((r) => r.stderr.includes("Error"))
-          ? "⚠️ Build completed with optimization errors"
-          : "✅ Build and optimization completed successfully!",
+        type: 'text',
+        text: optimizationResults.some((r) => r.stderr.includes('Error'))
+          ? '⚠️ Build completed with optimization errors'
+          : '✅ Build and optimization completed successfully!',
       });
 
       return messages;
     } catch (error) {
-      console.error("Error in build and optimize process:", error);
+      console.error('Error in build and optimize process:', error);
       throw error;
     }
   }
@@ -254,7 +254,7 @@ export class Soroban extends Core {
       const errorMessage = this.createDeploymentMessages();
 
       errorMessage.push({
-        type: "text",
+        type: 'text',
         text: `❌ Error in deploy process: ${error instanceof Error ? error.message : String(error)}`,
       });
 
@@ -281,14 +281,14 @@ export class Soroban extends Core {
 
       methodsWithArgs.forEach((method) => {
         messages.push({
-          type: "text",
-          text: `Method: "${method.method}"; Arguments: ${method.args.length > 0 ? method.args.map((arg) => `${arg.name}: ${arg.type}`).join(", ") : "No arguments"}`,
+          type: 'text',
+          text: `Method: "${method.method}"; Arguments: ${method.args.length > 0 ? method.args.map((arg) => `${arg.name}: ${arg.type}`).join(', ') : 'No arguments'}`,
         });
       });
 
       return messages;
     } catch (error) {
-      console.error("Error in retrieve contract methods process:", error);
+      console.error('Error in retrieve contract methods process:', error);
       throw error;
     }
   }
@@ -296,7 +296,7 @@ export class Soroban extends Core {
   private createInitialMessage(contractAddress: string): OutputMessage[] {
     return [
       {
-        type: "text",
+        type: 'text',
         text: `🚀 Retrieving contract methods for address: ${contractAddress}`,
       },
     ];
@@ -306,7 +306,7 @@ export class Soroban extends Core {
     contractAddress: string,
     secretKey: string,
   ): Promise<string[]> {
-    const command = this.getCommand("contractInfo", {
+    const command = this.getCommand('contractInfo', {
       contractId: contractAddress,
       network: this.network,
       secretKey,
@@ -329,7 +329,7 @@ export class Soroban extends Core {
     Array<{ method: string; args: Array<{ name: string; type: string }> }>
   > {
     const methodArgs = methods.map(async (method) => {
-      const command = this.getCommand("contractMethod", {
+      const command = this.getCommand('contractMethod', {
         contractId: contractAddress,
         network: this.network,
         secretKey,
@@ -341,7 +341,7 @@ export class Soroban extends Core {
         args: Array<{ name: string; type: string }>;
       }>((resolve) => {
         exec(command, (_, stdout) => {
-          const args = this.parseContractArgs(stdout.split("\n"));
+          const args = this.parseContractArgs(stdout.split('\n'));
 
           resolve({ method, args });
         });
@@ -352,22 +352,22 @@ export class Soroban extends Core {
   }
 
   private parseContractInfo(stdout: string): string[] {
-    const lines = stdout.split("\n").map((line) => line.trim());
+    const lines = stdout.split('\n').map((line) => line.trim());
     const commandsIndex = lines.findIndex((line) =>
-      line.startsWith("Commands:"),
+      line.startsWith('Commands:'),
     );
-    const helpIndex = lines.findIndex((line) => line.startsWith("help"));
+    const helpIndex = lines.findIndex((line) => line.startsWith('help'));
 
     return lines
       .slice(commandsIndex + 1, helpIndex)
-      .filter((method) => !method.includes("__constructor"))
-      .map((method) => method.replace("  - ", ""));
+      .filter((method) => !method.includes('__constructor'))
+      .map((method) => method.replace('  - ', ''));
   }
 
   private parseContractArgs(
     output: string[],
   ): Array<{ name: string; type: string }> {
-    const optionsStartIndex = output.findIndex((line) => line === "Options:");
+    const optionsStartIndex = output.findIndex((line) => line === 'Options:');
     if (optionsStartIndex === -1) return [];
 
     return output
@@ -381,7 +381,7 @@ export class Soroban extends Core {
   private isValidArgumentLine(line: string): boolean {
     if (!line) return false;
 
-    const invalidPrefixes = ["-h", "Usage:", "Example:", "Usage Notes:"];
+    const invalidPrefixes = ['-h', 'Usage:', 'Example:', 'Usage Notes:'];
 
     return !invalidPrefixes.some((prefix) => line.startsWith(prefix));
   }
@@ -401,7 +401,7 @@ export class Soroban extends Core {
   private createDeploymentMessages(): OutputMessage[] {
     return [
       {
-        type: "text",
+        type: 'text',
         text: `🚀 Starting contract deployment...`,
       },
     ];
@@ -412,19 +412,19 @@ export class Soroban extends Core {
     secretKey,
     constructorArgs,
   }: DeployContractArgs): Promise<OutputMessage[]> {
-    const command = this.getCommand("deploy", {
+    const command = this.getCommand('deploy', {
       wasmPath,
       secretKey,
       network: this.network,
       constructorArgs: constructorArgs
         ? this.resolveConstructorArgs(constructorArgs)
-        : "",
+        : '',
     });
 
     return new Promise((resolve) => {
       exec(command, (error, stdout, stderr) => {
         if (error) {
-          console.error("Error deploying contract:", error);
+          console.error('Error deploying contract:', error);
           resolve(this.formatErrorOutput(stderr));
           return;
         }
@@ -446,7 +446,7 @@ export class Soroban extends Core {
   ): OutputMessage[] {
     const contractMessage = messages
       .filter((m) => m.text.length > 0)
-      .find((message) => message.text.startsWith("C"));
+      .find((message) => message.text.startsWith('C'));
 
     if (!contractMessage) {
       return messages;
@@ -456,7 +456,7 @@ export class Soroban extends Core {
 
     return [
       {
-        type: "text",
+        type: 'text',
         text: `Contract deployed successfully at address: ${contractAddress}`,
       },
     ];
@@ -493,7 +493,7 @@ export class Soroban extends Core {
     currentPath?: string,
   ): ConstructorArg[] {
     const srcDir =
-      currentPath || this.resolvePath(contractPath, "../../../../");
+      currentPath || this.resolvePath(contractPath, '../../../../');
     const entries = this.readDir(srcDir);
     const packageNameInKebabCase = this.fromSnakeCaseToKebabCase(packageName);
 
@@ -527,7 +527,7 @@ export class Soroban extends Core {
     filePath: string,
     fileName: string,
   ): ConstructorArg[] {
-    if (!fileName.endsWith(".rs")) {
+    if (!fileName.endsWith('.rs')) {
       return [];
     }
 
@@ -542,7 +542,7 @@ export class Soroban extends Core {
 
   private parseConstructorArgs(args: string): ConstructorArg[] {
     return args
-      .split(",")
+      .split(',')
       .slice(1)
       .map(this.parseArgument)
       .filter((arg): arg is ConstructorArg => arg !== null);
@@ -551,7 +551,7 @@ export class Soroban extends Core {
   private parseArgument(arg: string): ConstructorArg | null {
     const [name, type] = arg
       .trim()
-      .split(": ")
+      .split(': ')
       .map((part) => part?.trim());
 
     if (!name || !type) {
@@ -572,27 +572,27 @@ export class Soroban extends Core {
     return (
       this.isDirectory(fullPath) &&
       (fullPath.includes(packageNameInKebabCase) ||
-        directoryName === "contracts")
+        directoryName === 'contracts')
     );
   }
 
   private verifyPackageName(contractPath: string): void {
     const packageName = this.readFile<string>(
-      this.resolvePath(contractPath, "Cargo.toml"),
+      this.resolvePath(contractPath, 'Cargo.toml'),
     );
   }
 
   private resolveConstructorArgs(constructorArgs: ConstructorArg[]): string {
     return constructorArgs
       .map((arg) => `--${arg.name} ${arg.value}`)
-      .join(", ");
+      .join(', ');
   }
 
   private resolvePacakgeName(contractPath: string): string {
-    return contractPath.split(/[/\\]/).pop()?.split(".")[0] || "";
+    return contractPath.split(/[/\\]/).pop()?.split('.')[0] || '';
   }
 
   private fromSnakeCaseToKebabCase(str: string): string {
-    return str.replace(/_/g, "-");
+    return str.replace(/_/g, '-');
   }
 }
