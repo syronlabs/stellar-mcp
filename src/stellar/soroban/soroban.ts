@@ -3,9 +3,11 @@ import { exec } from "child_process";
 
 import getNetworkConfig from "../../config/environment.config.js";
 import { OutputMessage, Platform } from "../../interfaces/common.interface.js";
+import { ContractInterface } from "../../interfaces/soroban/ContractInterface";
 import { DeployContractArgs } from "../../interfaces/soroban/DeployContractArgs.js";
 import { ConstructorArg } from "../../interfaces/soroban/DeployContractArgs.js";
 import { GetContractMethodsArgs } from "../../interfaces/soroban/GetContractMethods.js";
+import { ContractParser } from "../core/contractParser.js";
 import { Core } from "../core/core.js";
 
 export class Soroban extends Core {
@@ -268,22 +270,24 @@ export class Soroban extends Core {
       const { contractAddress, secretKey } = params;
       const messages = this.createInitialMessage(contractAddress);
 
-      const contractMethods = await this.getContractMethods(
+      const contractInterface = await this.getContractInterface(
         contractAddress,
         secretKey,
       );
 
-      const methodsWithArgs = await this.getMethodArguments(
-        contractAddress,
-        secretKey,
-        contractMethods,
-      );
+      messages.push({
+        type: "text",
+        text: `Interface retrieved successfully`,
+      });
 
-      methodsWithArgs.forEach((method) => {
-        messages.push({
-          type: "text",
-          text: `Method: "${method.method}"; Arguments: ${method.args.length > 0 ? method.args.map((arg) => `${arg.name}: ${arg.type}`).join(", ") : "No arguments"}`,
-        });
+      messages.push({
+        type: "text",
+        text: `Contract Interface`,
+      });
+
+      messages.push({
+        type: "text",
+        text: JSON.stringify(contractInterface, null, 2),
       });
 
       return messages;
@@ -302,100 +306,35 @@ export class Soroban extends Core {
     ];
   }
 
-  private async getContractMethods(
+  private async getContractInterface(
     contractAddress: string,
     secretKey: string,
-  ): Promise<string[]> {
-    const command = this.getCommand("contractInfo", {
+  ): Promise<ContractInterface> {
+    const command = this.getCommand("contractInterface", {
       contractId: contractAddress,
       network: this.network,
       secretKey,
     });
 
-    return new Promise<string[]>((resolve, reject) => {
+    return new Promise<ContractInterface>((resolve) => {
       exec(command, (_, stdout) => {
-        const methods = this.parseContractInfo(stdout);
+        const parser = new ContractParser(stdout);
+        const contractInterface = parser.getContractInterface();
 
-        resolve(methods);
+        resolve(contractInterface);
       });
     });
   }
 
-  private async getMethodArguments(
-    contractAddress: string,
-    secretKey: string,
-    methods: string[],
-  ): Promise<
-    Array<{ method: string; args: Array<{ name: string; type: string }> }>
-  > {
-    const methodArgs = methods.map(async (method) => {
-      const command = this.getCommand("contractMethod", {
-        contractId: contractAddress,
-        network: this.network,
-        secretKey,
-        method,
-      });
-
-      return new Promise<{
-        method: string;
-        args: Array<{ name: string; type: string }>;
-      }>((resolve) => {
-        exec(command, (_, stdout) => {
-          const args = this.parseContractArgs(stdout.split("\n"));
-
-          resolve({ method, args });
-        });
-      });
-    });
-
-    return Promise.all(methodArgs);
-  }
-
-  private parseContractInfo(stdout: string): string[] {
+  private parseContractInterface(stdout: string): string[] {
     const lines = stdout.split("\n").map((line) => line.trim());
     const commandsIndex = lines.findIndex((line) =>
       line.startsWith("Commands:"),
     );
-    const helpIndex = lines.findIndex((line) => line.startsWith("help"));
 
     return lines
-      .slice(commandsIndex + 1, helpIndex)
-      .filter((method) => !method.includes("__constructor"))
+      .slice(commandsIndex + 1)
       .map((method) => method.replace("  - ", ""));
-  }
-
-  private parseContractArgs(
-    output: string[],
-  ): Array<{ name: string; type: string }> {
-    const optionsStartIndex = output.findIndex((line) => line === "Options:");
-    if (optionsStartIndex === -1) return [];
-
-    return output
-      .slice(optionsStartIndex + 1)
-      .map((line) => line.trim())
-      .filter(this.isValidArgumentLine)
-      .map(this.parseArgumentLine)
-      .filter((arg): arg is { name: string; type: string } => arg !== null);
-  }
-
-  private isValidArgumentLine(line: string): boolean {
-    if (!line) return false;
-
-    const invalidPrefixes = ["-h", "Usage:", "Example:", "Usage Notes:"];
-
-    return !invalidPrefixes.some((prefix) => line.startsWith(prefix));
-  }
-
-  private parseArgumentLine(
-    line: string,
-  ): { name: string; type: string } | null {
-    const match = line.match(/^--([a-zA-Z0-9_]+)\s*<([^>]+)>$/);
-    if (!match) return null;
-
-    return {
-      name: match[1],
-      type: match[2],
-    };
   }
 
   private createDeploymentMessages(): OutputMessage[] {
