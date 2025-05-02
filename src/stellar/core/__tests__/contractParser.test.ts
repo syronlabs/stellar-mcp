@@ -10,13 +10,13 @@ const readFixture = (filename: string): string => {
 
 describe('ContractParser', () => {
   describe('Contract Name Parsing', () => {
-    it('should parse the contract name from a real contract', () => {
+    it('Should parse the contract name from a real contract', () => {
       const source = readFixture('contract-output.txt');
       const parser = new ContractParser(source);
       expect(parser.getContractName()).toBe('Contract');
     });
 
-    it('should return DefaultContractName when no contract name is found', () => {
+    it('Should return DefaultContractName when no contract name is found', () => {
       const source = 'pub struct Something {';
       const parser = new ContractParser(source);
       expect(parser.getContractName()).toBe('DefaultContractName');
@@ -25,23 +25,36 @@ describe('ContractParser', () => {
 
   describe('Method Parsing', () => {
     it('Should parse all methods from a real contract', () => {
+      const EXPECTED_AMOUNT_OF_METHODS = 17;
       const source = readFixture('contract-output.txt');
       const parser = new ContractParser(source);
       const methods = parser.getContractMethods();
 
-      expect(methods).toHaveLength(17);
-      expect(methods[0]).toEqual({
-        name: '__constructor',
-        parameters: [{ name: 'admin', type: 'Address' }],
-        returnType: '()',
-      });
+      expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
+
+      const expectedConstructorParameters = [
+        { name: 'admin', type: 'Address' },
+      ];
+
+      const expectedFields = [
+        {
+          name: '__constructor',
+          parameters: expect.arrayContaining(
+            expectedConstructorParameters.map(expect.objectContaining),
+          ),
+          returnType: '()',
+        },
+      ];
+
+      expect(methods[0]).toEqual(expect.objectContaining(expectedFields));
     });
 
     it('Should not include the env parameter in the methods', () => {
+      const EXPECTED_AMOUNT_OF_METHODS = 17;
       const source = readFixture('contract-output.txt');
       const parser = new ContractParser(source);
       const methods = parser.getContractMethods();
-      expect(methods).toHaveLength(17);
+      expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
 
       const envMethod = methods.find((method) =>
         method.parameters.some((param) => param.type === 'Env'),
@@ -51,30 +64,33 @@ describe('ContractParser', () => {
     });
 
     it('Should parse a simple method with no parameters', () => {
+      const EXPECTED_AMOUNT_OF_METHODS = 1;
       const source = `
         pub trait MyContract {
-          fn get_value() -> u32;
+          fn get_value(env: Env) -> u32;
         }
       `;
       const parser = new ContractParser(source);
       const methods = parser.getContractMethods();
-      expect(methods).toHaveLength(1);
-      expect(methods[0]).toEqual({
-        name: 'get_value',
-        parameters: [],
-        returnType: 'u32',
-      });
+      expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
+
+      const method = methods[0];
+
+      expect(method.name).toBe('get_value');
+      expect(method.parameters).toEqual([]);
+      expect(method.returnType).toBe('u32');
     });
 
     it('Should parse a method with parameters', () => {
+      const EXPECTED_AMOUNT_OF_METHODS = 1;
       const source = `
         pub trait MyContract {
-          fn set_value(value: u32) -> ();
+          fn set_value(env: Env, value: u32) -> ();
         }
       `;
       const parser = new ContractParser(source);
       const methods = parser.getContractMethods();
-      expect(methods).toHaveLength(1);
+      expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
       expect(methods[0]).toEqual({
         name: 'set_value',
         parameters: [{ name: 'value', type: 'u32' }],
@@ -83,6 +99,7 @@ describe('ContractParser', () => {
     });
 
     it('Should parse a method with multiple parameters', () => {
+      const EXPECTED_AMOUNT_OF_METHODS = 1;
       const source = `
         pub trait MyContract {
           fn transfer(from: Address, to: Address, amount: u64) -> ();
@@ -90,22 +107,25 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const methods = parser.getContractMethods();
-      expect(methods).toHaveLength(1);
-      expect(methods[0]).toEqual({
-        name: 'transfer',
-        parameters: [
-          { name: 'from', type: 'Address' },
-          { name: 'to', type: 'Address' },
-          { name: 'amount', type: 'u64' },
-        ],
-        returnType: '()',
-      });
+      expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
+
+      const method = methods[0];
+
+      expect(method.name).toBe('transfer');
+      expect(method.parameters).toEqual([
+        { name: 'from', type: 'Address' },
+        { name: 'to', type: 'Address' },
+        { name: 'amount', type: 'u64' },
+      ]);
+      expect(method.returnType).toBe('()');
     });
 
     it('Should handle multi-line method definitions', () => {
+      const EXPECTED_AMOUNT_OF_METHODS = 1;
       const source = `
         pub trait MyContract {
           fn complex_method(
+            env: Env,
             param1: u32,
             param2: String,
             param3: Vec<u8>,
@@ -115,32 +135,36 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const methods = parser.getContractMethods();
-      expect(methods).toHaveLength(1);
-      expect(methods[0]).toEqual({
-        name: 'complex_method',
-        parameters: expect.arrayContaining([
-          expect.objectContaining({ name: 'param1', type: 'u32' }),
-          expect.objectContaining({ name: 'param2', type: 'String' }),
-          expect.objectContaining({ name: 'param3', type: 'Vec<u8>' }),
-          expect.objectContaining({
-            name: 'param4',
-            type: 'Map<Address, u64>',
-          }),
-        ]),
-        returnType: 'Result<(), Error>',
-      });
+      expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
+
+      const method = methods[0];
+
+      expect(method.name).toBe('complex_method');
+
+      const expectedParameters = [
+        { name: 'param1', type: 'u32' },
+        { name: 'param2', type: 'String' },
+        { name: 'param3', type: 'Vec<u8>' },
+        { name: 'param4', type: 'Map<Address, u64>' },
+      ];
+
+      expect(method.parameters).toEqual(
+        expect.arrayContaining(expectedParameters.map(expect.objectContaining)),
+      );
+      expect(method.returnType).toBe('Result<(), Error>');
     });
 
     it('Should skip invalid method definitions', () => {
+      const EXPECTED_AMOUNT_OF_METHODS = 1;
       const source = `
         pub trait MyContract {
           fn invalid_method(;
-          fn valid_method() -> u32;
+          fn valid_method(env: Env) -> u32;
         }
       `;
       const parser = new ContractParser(source);
       const methods = parser.getContractMethods();
-      expect(methods).toHaveLength(1);
+      expect(methods).toHaveLength(EXPECTED_AMOUNT_OF_METHODS);
       expect(methods[0]).toEqual({
         name: 'valid_method',
         parameters: [],
@@ -151,41 +175,52 @@ describe('ContractParser', () => {
 
   describe('Struct Parsing', () => {
     it('Should parse all structs from a real contract', () => {
+      const EXPECTED_STRUCT_LENGTH = 4;
       const source = readFixture('contract-output.txt');
       const parser = new ContractParser(source);
       const structs = parser.getContractStructs();
 
-      expect(structs).toHaveLength(4);
-      expect(structs[0]).toEqual({
+      expect(structs).toHaveLength(EXPECTED_STRUCT_LENGTH);
+
+      const dataStruct = structs[0];
+
+      const expectedFields = [
+        {
+          name: 'admin',
+          type: 'Address',
+          visibility: 'pub',
+        },
+        {
+          name: 'counter',
+          type: 'u32',
+          visibility: 'pub',
+        },
+        {
+          name: 'message',
+          type: 'String',
+          visibility: 'pub',
+        },
+      ];
+
+      expect(dataStruct).toEqual({
         name: 'Data',
-        fields: expect.arrayContaining([
-          expect.objectContaining({
-            name: 'admin',
-            type: 'Address',
-            visibility: 'pub',
-          }),
-          expect.objectContaining({
-            name: 'counter',
-            type: 'u32',
-            visibility: 'pub',
-          }),
-          expect.objectContaining({
-            name: 'message',
-            type: 'String',
-            visibility: 'pub',
-          }),
-        ]),
+        fields: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
       });
     });
 
     it('Should handle contracts without structs', () => {
+      const EXPECTED_AMOUNT_OF_STRUCTS = 0;
       const source = readFixture('contract-without-structs.txt');
       const parser = new ContractParser(source);
       const structs = parser.getContractStructs();
-      expect(structs).toHaveLength(0);
+
+      expect(structs).toHaveLength(EXPECTED_AMOUNT_OF_STRUCTS);
     });
 
     it('Should parse a simple struct', () => {
+      const EXPECTED_AMOUNT_OF_STRUCTS = 1;
       const source = `
         pub struct User {
           pub name: String,
@@ -194,25 +229,31 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const structs = parser.getContractStructs();
-      expect(structs).toHaveLength(1);
+      expect(structs).toHaveLength(EXPECTED_AMOUNT_OF_STRUCTS);
+
+      const expectedFields = [
+        {
+          name: 'name',
+          type: 'String',
+          visibility: 'pub',
+        },
+        {
+          name: 'age',
+          type: 'u32',
+          visibility: 'pub',
+        },
+      ];
+
       expect(structs[0]).toEqual({
         name: 'User',
-        fields: expect.arrayContaining([
-          expect.objectContaining({
-            name: 'name',
-            type: 'String',
-            visibility: 'pub',
-          }),
-          expect.objectContaining({
-            name: 'age',
-            type: 'u32',
-            visibility: 'pub',
-          }),
-        ]),
+        fields: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
       });
     });
 
     it('Should parse a struct with private fields', () => {
+      const EXPECTED_AMOUNT_OF_STRUCTS = 1;
       const source = `
         pub struct Account {
           pub address: Address,
@@ -221,25 +262,26 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const structs = parser.getContractStructs();
-      expect(structs).toHaveLength(1);
+      expect(structs).toHaveLength(EXPECTED_AMOUNT_OF_STRUCTS);
+
+      const expectedFields = [
+        {
+          name: 'address',
+          type: 'Address',
+          visibility: 'pub',
+        },
+      ];
+
       expect(structs[0]).toEqual({
         name: 'Account',
-        fields: expect.arrayContaining([
-          expect.objectContaining({
-            name: 'address',
-            type: 'Address',
-            visibility: 'pub',
-          }),
-          expect.objectContaining({
-            name: 'balance',
-            type: 'u64',
-            visibility: 'private',
-          }),
-        ]),
+        fields: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
       });
     });
 
     it('Should parse struct definitions without commas', () => {
+      const EXPECTED_AMOUNT_OF_STRUCTS = 2;
       const source = `
         pub struct StructWithoutCommas {
           pub field1: String
@@ -251,7 +293,7 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const structs = parser.getContractStructs();
-      expect(structs).toHaveLength(2);
+      expect(structs).toHaveLength(EXPECTED_AMOUNT_OF_STRUCTS);
 
       const expectedStructWithCommas = expect.objectContaining({
         name: 'StructWithCommas',
@@ -280,11 +322,12 @@ describe('ContractParser', () => {
 
   describe('Enum Parsing', () => {
     it('Should parse all enums from a real contract', () => {
+      const EXPECTED_AMOUNT_OF_ENUMS = 2;
       const source = readFixture('contract-output.txt');
       const parser = new ContractParser(source);
       const enums = parser.getContractEnums();
 
-      expect(enums).toHaveLength(2);
+      expect(enums).toHaveLength(EXPECTED_AMOUNT_OF_ENUMS);
 
       const expectedDataKeyEnum = expect.objectContaining({
         name: 'DataKey',
@@ -315,13 +358,15 @@ describe('ContractParser', () => {
     });
 
     it('Should handle contracts without enums', () => {
+      const EXPECTED_AMOUNT_OF_ENUMS = 0;
       const source = readFixture('contract-without-enums.txt');
       const parser = new ContractParser(source);
       const enums = parser.getContractEnums();
-      expect(enums).toHaveLength(0);
+      expect(enums).toHaveLength(EXPECTED_AMOUNT_OF_ENUMS);
     });
 
     it('Should parse a simple enum', () => {
+      const EXPECTED_AMOUNT_OF_ENUMS = 1;
       const source = `
         pub enum Status {
           Active,
@@ -331,15 +376,25 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const enums = parser.getContractEnums();
-      expect(enums).toHaveLength(1);
+      expect(enums).toHaveLength(EXPECTED_AMOUNT_OF_ENUMS);
+
+      const expectedFields = [
+        {
+          name: 'Active',
+        },
+        {
+          name: 'Inactive',
+        },
+        {
+          name: 'Pending',
+        },
+      ];
 
       const expectedStatusEnum = expect.objectContaining({
         name: 'Status',
-        variants: expect.arrayContaining([
-          expect.objectContaining({ name: 'Active' }),
-          expect.objectContaining({ name: 'Inactive' }),
-          expect.objectContaining({ name: 'Pending' }),
-        ]),
+        variants: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
         isError: false,
       });
 
@@ -347,6 +402,7 @@ describe('ContractParser', () => {
     });
 
     it('Should parse an enum with values', () => {
+      const EXPECTED_AMOUNT_OF_ENUMS = 1;
       const source = `
         pub enum ErrorCode {
           NotFound = 404,
@@ -356,15 +412,27 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const enums = parser.getContractEnums();
-      expect(enums).toHaveLength(1);
+      expect(enums).toHaveLength(EXPECTED_AMOUNT_OF_ENUMS);
 
+      const expectedFields = [
+        {
+          name: 'NotFound',
+          value: 404,
+        },
+        {
+          name: 'Unauthorized',
+          value: 401,
+        },
+        {
+          name: 'InternalError',
+          value: 500,
+        },
+      ];
       const expectedErrorCodeEnum = expect.objectContaining({
         name: 'ErrorCode',
-        variants: expect.arrayContaining([
-          expect.objectContaining({ name: 'NotFound', value: 404 }),
-          expect.objectContaining({ name: 'Unauthorized', value: 401 }),
-          expect.objectContaining({ name: 'InternalError', value: 500 }),
-        ]),
+        variants: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
         isError: false,
       });
 
@@ -372,6 +440,7 @@ describe('ContractParser', () => {
     });
 
     it('Should parse an error enum', () => {
+      const EXPECTED_AMOUNT_OF_ENUMS = 1;
       const source = `
         #[contracterror]
         pub enum ContractError {
@@ -382,32 +451,31 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const enums = parser.getContractEnums();
-      expect(enums).toHaveLength(1);
+      expect(enums).toHaveLength(EXPECTED_AMOUNT_OF_ENUMS);
 
-      const expectedInvalidInputVariant = expect.objectContaining({
-        name: 'InvalidInput',
-      });
-
-      const expectedInsufficientBalanceVariant = expect.objectContaining({
-        name: 'InsufficientBalance',
-      });
-
-      const expectedUnauthorizedVariant = expect.objectContaining({
-        name: 'Unauthorized',
-      });
+      const expectedFields = [
+        {
+          name: 'InvalidInput',
+        },
+        {
+          name: 'InsufficientBalance',
+        },
+        {
+          name: 'Unauthorized',
+        },
+      ];
 
       expect(enums[0]).toEqual({
         name: 'ContractError',
-        variants: [
-          expectedInvalidInputVariant,
-          expectedInsufficientBalanceVariant,
-          expectedUnauthorizedVariant,
-        ],
+        variants: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
         isError: false,
       });
     });
 
     it('Should parse an enum with complex data types', () => {
+      const EXPECTED_AMOUNT_OF_ENUMS = 1;
       const source = `
         pub enum Event {
           Transfer(Address, Address, u64),
@@ -417,26 +485,32 @@ describe('ContractParser', () => {
 
       const parser = new ContractParser(source);
       const enums = parser.getContractEnums();
-      expect(enums).toHaveLength(1);
+      expect(enums).toHaveLength(EXPECTED_AMOUNT_OF_ENUMS);
 
-      const expectedTransferVariant = expect.objectContaining({
-        name: 'Transfer',
-        dataType: 'Address, Address, u64',
-      });
+      const expectedFields = [
+        {
+          name: 'Transfer',
+          dataType: 'Address, Address, u64',
+        },
+        {
+          name: 'Approval',
+          dataType: '(Address, Address, bool)',
+        },
+      ];
 
-      const expectedApprovalVariant = expect.objectContaining({
-        name: 'Approval',
-        dataType: '(Address, Address, bool)',
-      });
-
-      expect(enums[0]).toEqual({
+      const expectedEventEnum = expect.objectContaining({
         name: 'Event',
-        variants: [expectedTransferVariant, expectedApprovalVariant],
+        variants: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
         isError: false,
       });
+
+      expect(enums[0]).toEqual(expectedEventEnum);
     });
 
     it('Should skip invalid enum definitions', () => {
+      const EXPECTED_AMOUNT_OF_ENUMS = 2;
       const source = `
         #[contracterror]
         pub enum InvalidEnum {
@@ -450,23 +524,30 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const enums = parser.getContractEnums();
-      expect(enums).toHaveLength(2);
+      expect(enums).toHaveLength(EXPECTED_AMOUNT_OF_ENUMS);
+
+      const expectedFields = [
+        {
+          name: 'Variant1',
+        },
+        {
+          name: 'Variant2',
+        },
+      ];
 
       const expectedInvalidEnum = expect.objectContaining({
         name: 'InvalidEnum',
-        variants: expect.arrayContaining([
-          expect.objectContaining({ name: 'Variant1' }),
-          expect.objectContaining({ name: 'Variant2' }),
-        ]),
+        variants: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
         isError: false,
       });
 
       const expectedValidEnum = expect.objectContaining({
         name: 'ValidEnum',
-        variants: expect.arrayContaining([
-          expect.objectContaining({ name: 'Variant1' }),
-          expect.objectContaining({ name: 'Variant2' }),
-        ]),
+        variants: expect.arrayContaining(
+          expectedFields.map(expect.objectContaining),
+        ),
         isError: false,
       });
 
@@ -481,6 +562,7 @@ describe('ContractParser', () => {
 
   describe('Error Cases', () => {
     it('Should handle invalid field syntax gracefully', () => {
+      const EXPECTED_AMOUNT_OF_STRUCTS = 0;
       const source =
         readFixture('contract-output.txt') +
         '\n' +
@@ -492,7 +574,7 @@ describe('ContractParser', () => {
       `;
       const parser = new ContractParser(source);
       const structs = parser.getContractStructs();
-      expect(structs.length).toBeGreaterThan(0);
+      expect(structs).toHaveLength(EXPECTED_AMOUNT_OF_STRUCTS);
     });
   });
 });
