@@ -1,6 +1,6 @@
-import fs from "fs";
-import os from "os";
-import path from "path";
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 export class FileSystemManager {
   protected platform: NodeJS.Platform;
@@ -9,7 +9,7 @@ export class FileSystemManager {
     this.platform = this.getPlatform();
   }
 
-  protected readFile<T>(filePath: string, encoding: BufferEncoding = "binary") {
+  protected readFile<T>(filePath: string, encoding: BufferEncoding = 'binary') {
     return fs.readFileSync(filePath, encoding) as T;
   }
 

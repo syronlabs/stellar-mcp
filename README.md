@@ -7,14 +7,18 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
 ### 🛠️ Tools
 
 #### 💫 Stellar Classic Operations
+
 - **stellar_create_account**
+
   - Create a new Stellar account
 
 - **stellar_balance**
+
   - Get the balance of a Stellar account
   - Input: `account` (string): The public key of the account to check balance
 
 - **stellar_payment**
+
   - Send a payment to another account
   - Inputs:
     - `destination` (string, required): The destination account public key
@@ -25,10 +29,12 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
       - `issuer` (string): The asset issuer public key
 
 - **stellar_transactions**
+
   - Get transaction history for an account
   - Input: `account` (string): The account public key to get transactions for
 
 - **stellar_create_asset**
+
   - Create a new asset on the Stellar network
   - Inputs:
     - `code` (string, required): The asset code
@@ -36,7 +42,8 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - `distributorSecretKey` (string, required): The secret key of the distributing account
     - `totalSupply` (string, required): The total supply of the asset
 
-- **stellar_change_trust** 
+- **stellar_change_trust**
+
   - Change trustline for an asset
   - Inputs:
     - `asset` (object, required):
@@ -46,6 +53,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - `secretKey` (string, required): The secret key of the account changing trust
 
 - **stellar_create_claimable_balance**
+
   - Create a claimable balance that can be claimed by specified accounts under certain conditions
   - Inputs:
     - `asset` (object, optional): Custom asset details. If not provided, uses native XLM
@@ -60,6 +68,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - `secretKey` (string, required): Secret key of the account creating the balance
 
 - **stellar_claim_claimable_balance**
+
   - Claim a claimable balance using its ID
   - Inputs:
     - `balanceId` (string, required): ID of the claimable balance to claim (returned from createClaimableBalance)
@@ -72,6 +81,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
 #### 📝 Soroban Smart Contract Operations
 
 - **soroban_build_and_optimize**
+
   - Build and optimize Soroban smart contracts
   - Inputs:
     - `contractPath` (string, optional): The path to the contract directory. Defaults to current working directory
@@ -86,6 +96,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Provides detailed logs of the entire process
 
 - **soroban_deploy**
+
   - Deploy Soroban smart contracts to the Stellar network
   - Inputs:
     - `wasmPath` (string, required): Path to the compiled WASM file
@@ -106,28 +117,30 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Provides detailed deployment logs and status updates
     - Supports both simple contracts and contracts with initialization logic
   - Example Usage:
+
     ```typescript
     // Deploying a contract without constructor
     await soroban.deploy({
-      wasmPath: "path/to/hello_world.wasm",
-      secretKey: "S...",
+      wasmPath: 'path/to/hello_world.wasm',
+      secretKey: 'S...',
     });
 
     // Deploying a contract with constructor
     await soroban.deploy({
-      wasmPath: "path/to/contract_with_constructor.wasm",
-      secretKey: "S...",
+      wasmPath: 'path/to/contract_with_constructor.wasm',
+      secretKey: 'S...',
       constructorArgs: [
         {
-          name: "admin",
-          type: "Address",
-          value: "G...",
+          name: 'admin',
+          type: 'Address',
+          value: 'G...',
         },
       ],
     });
     ```
 
 - **soroban_retrieve_contract_methods**
+
   - Retrieve the complete interface of a deployed Soroban smart contract
   - Inputs:
     - `contractAddress` (string, required): Address of the deployed contract (starts with "C")
@@ -175,160 +188,167 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
       - Enums with tuple data types
       - Error enums (marked with #[contracterror])
   - Example Usage:
+
     ```typescript
     const result = await soroban.retrieveContractMethods({
-      contractAddress: "CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO",
-      secretKey: "S...",
+      contractAddress:
+        'CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO',
     });
 
     // Example response:
     [
       {
-        type: "text",
-        text: "🚀 Retrieving contract methods for address: CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO"
+        type: 'text',
+        text: '🚀 Retrieving contract methods for address: CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO',
       },
       {
-        type: "text",
-        text: "Interface retrieved successfully"
+        type: 'text',
+        text: 'Interface retrieved successfully',
       },
       {
-        type: "text",
-        text: "Contract Interface"
+        type: 'text',
+        text: 'Contract Interface',
       },
       {
-        type: "text",
-        text: JSON.stringify({
-          name: "Contract",
-          methods: [
-            {
-              name: "set_admin",
-              parameters: [
-                { name: "admin", type: "Address" }
-              ],
-              returnType: "()"
-            },
-            {
-              name: "get_admin",
-              parameters: [],
-              returnType: "Address"
-            },
-            {
-              name: "method_with_args",
-              parameters: [
-                { name: "arg1", type: "u32" },
-                { name: "arg2", type: "u32" }
-              ],
-              returnType: "(u32, u32)"
-            },
-            {
-              name: "handle_integers",
-              parameters: [
-                { name: "i32_val", type: "i32" },
-                { name: "i64_val", type: "i64" },
-                { name: "i128_val", type: "i128" },
-                { name: "i256_val", type: "I256" },
-                { name: "u32_val", type: "u32" },
-                { name: "u64_val", type: "u64" },
-                { name: "u128_val", type: "u128" },
-                { name: "u256_val", type: "U256" }
-              ],
-              returnType: "(i32, u32)"
-            },
-            {
-              name: "handle_strings",
-              parameters: [
-                { name: "str_val", type: "String" },
-                { name: "bytes_val", type: "Bytes" },
-                { name: "bytes_n_val", type: "BytesN<32>" }
-              ],
-              returnType: "String"
-            },
-            {
-              name: "handle_collections",
-              parameters: [
-                { name: "map", type: "Map<String, u32>" },
-                { name: "vec", type: "Vec<u32>" }
-              ],
-              returnType: "(Map<String, u32>, Vec<u32>)"
-            },
-            {
-              name: "handle_custom_types",
-              parameters: [
-                { name: "data", type: "Data" },
-                { name: "complex_data", type: "ComplexData" }
-              ],
-              returnType: "(Data, ComplexData)"
-            },
-            {
-              name: "handle_optionals",
-              parameters: [
-                { name: "maybe_u32", type: "Option<u32>" },
-                { name: "maybe_address", type: "Option<Address>" }
-              ],
-              returnType: "OptionalData"
-            },
-            {
-              name: "get_admin_from_storage",
-              parameters: [],
-              returnType: "Result<Address, ContractError>"
-            }
-          ],
-          structs: [
-            {
-              name: "Data",
-              fields: [
-                { name: "admin", type: "Address", visibility: "pub" },
-                { name: "counter", type: "u32", visibility: "pub" },
-                { name: "message", type: "String", visibility: "pub" }
-              ]
-            },
-            {
-              name: "ComplexData",
-              fields: [
-                { name: "admin", type: "Address", visibility: "pub" },
-                { name: "data", type: "Data", visibility: "pub" },
-                { name: "bytes", type: "Bytes", visibility: "pub" },
-                { name: "bytes_n", type: "BytesN<32>", visibility: "pub" },
-                { name: "duration", type: "Duration", visibility: "pub" },
-                { name: "map", type: "Map<String, u32>", visibility: "pub" },
-                { name: "symbol", type: "Symbol", visibility: "pub" },
-                { name: "timepoint", type: "Timepoint", visibility: "pub" },
-                { name: "vec", type: "Vec<u32>", visibility: "pub" }
-              ]
-            },
-            {
-              name: "OptionalData",
-              fields: [
-                { name: "maybe_u32", type: "Option<u32>", visibility: "pub" },
-                { name: "maybe_address", type: "Option<Address>", visibility: "pub" }
-              ]
-            }
-          ],
-          enums: [
-            {
-              name: "DataKey",
-              variants: [
-                { name: "Admin" },
-                { name: "Counter" },
-                { name: "Data" },
-                { name: "Account", dataType: "Address" },
-                { name: "Contract", dataType: "(Address, u64)" }
-              ],
-              isError: false
-            },
-            {
-              name: "ContractError",
-              variants: [
-                { name: "AdminNotFound", value: 1 },
-                { name: "InvalidValue", value: 2 },
-                { name: "OptionNotFound", value: 3 }
-              ],
-              isError: true
-            }
-          ]
-        }, null, 2)
-      }
-    ]
+        type: 'text',
+        text: JSON.stringify(
+          {
+            name: 'Contract',
+            methods: [
+              {
+                name: 'set_admin',
+                parameters: [{ name: 'admin', type: 'Address' }],
+                returnType: '()',
+              },
+              {
+                name: 'get_admin',
+                parameters: [],
+                returnType: 'Address',
+              },
+              {
+                name: 'method_with_args',
+                parameters: [
+                  { name: 'arg1', type: 'u32' },
+                  { name: 'arg2', type: 'u32' },
+                ],
+                returnType: '(u32, u32)',
+              },
+              {
+                name: 'handle_integers',
+                parameters: [
+                  { name: 'i32_val', type: 'i32' },
+                  { name: 'i64_val', type: 'i64' },
+                  { name: 'i128_val', type: 'i128' },
+                  { name: 'i256_val', type: 'I256' },
+                  { name: 'u32_val', type: 'u32' },
+                  { name: 'u64_val', type: 'u64' },
+                  { name: 'u128_val', type: 'u128' },
+                  { name: 'u256_val', type: 'U256' },
+                ],
+                returnType: '(i32, u32)',
+              },
+              {
+                name: 'handle_strings',
+                parameters: [
+                  { name: 'str_val', type: 'String' },
+                  { name: 'bytes_val', type: 'Bytes' },
+                  { name: 'bytes_n_val', type: 'BytesN<32>' },
+                ],
+                returnType: 'String',
+              },
+              {
+                name: 'handle_collections',
+                parameters: [
+                  { name: 'map', type: 'Map<String, u32>' },
+                  { name: 'vec', type: 'Vec<u32>' },
+                ],
+                returnType: '(Map<String, u32>, Vec<u32>)',
+              },
+              {
+                name: 'handle_custom_types',
+                parameters: [
+                  { name: 'data', type: 'Data' },
+                  { name: 'complex_data', type: 'ComplexData' },
+                ],
+                returnType: '(Data, ComplexData)',
+              },
+              {
+                name: 'handle_optionals',
+                parameters: [
+                  { name: 'maybe_u32', type: 'Option<u32>' },
+                  { name: 'maybe_address', type: 'Option<Address>' },
+                ],
+                returnType: 'OptionalData',
+              },
+              {
+                name: 'get_admin_from_storage',
+                parameters: [],
+                returnType: 'Result<Address, ContractError>',
+              },
+            ],
+            structs: [
+              {
+                name: 'Data',
+                fields: [
+                  { name: 'admin', type: 'Address', visibility: 'pub' },
+                  { name: 'counter', type: 'u32', visibility: 'pub' },
+                  { name: 'message', type: 'String', visibility: 'pub' },
+                ],
+              },
+              {
+                name: 'ComplexData',
+                fields: [
+                  { name: 'admin', type: 'Address', visibility: 'pub' },
+                  { name: 'data', type: 'Data', visibility: 'pub' },
+                  { name: 'bytes', type: 'Bytes', visibility: 'pub' },
+                  { name: 'bytes_n', type: 'BytesN<32>', visibility: 'pub' },
+                  { name: 'duration', type: 'Duration', visibility: 'pub' },
+                  { name: 'map', type: 'Map<String, u32>', visibility: 'pub' },
+                  { name: 'symbol', type: 'Symbol', visibility: 'pub' },
+                  { name: 'timepoint', type: 'Timepoint', visibility: 'pub' },
+                  { name: 'vec', type: 'Vec<u32>', visibility: 'pub' },
+                ],
+              },
+              {
+                name: 'OptionalData',
+                fields: [
+                  { name: 'maybe_u32', type: 'Option<u32>', visibility: 'pub' },
+                  {
+                    name: 'maybe_address',
+                    type: 'Option<Address>',
+                    visibility: 'pub',
+                  },
+                ],
+              },
+            ],
+            enums: [
+              {
+                name: 'DataKey',
+                variants: [
+                  { name: 'Admin' },
+                  { name: 'Counter' },
+                  { name: 'Data' },
+                  { name: 'Account', dataType: 'Address' },
+                  { name: 'Contract', dataType: '(Address, u64)' },
+                ],
+                isError: false,
+              },
+              {
+                name: 'ContractError',
+                variants: [
+                  { name: 'AdminNotFound', value: 1 },
+                  { name: 'InvalidValue', value: 2 },
+                  { name: 'OptionNotFound', value: 3 },
+                ],
+                isError: true,
+              },
+            ],
+          },
+          null,
+          2,
+        ),
+      },
+    ];
     ```
 
     ### Method Parameter Types
@@ -336,10 +356,13 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     The parser supports various parameter and return types. Note that the `env` parameter is automatically filtered out from the interface as it is provided by the Soroban blockchain environment.
 
     1. **Primitive Types**
+
     ```rust
     fn handle_primitives(value: u32, flag: bool) -> u64;
     ```
+
     Parsed as:
+
     ```json
     {
       "name": "handle_primitives",
@@ -352,25 +375,29 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     ```
 
     2. **Custom Struct Types**
+
     ```rust
     fn handle_struct(data: Data) -> Data;
     ```
+
     Parsed as:
+
     ```json
     {
       "name": "handle_struct",
-      "parameters": [
-        { "name": "data", "type": "Data" }
-      ],
+      "parameters": [{ "name": "data", "type": "Data" }],
       "returnType": "Data"
     }
     ```
 
     3. **Collections**
+
     ```rust
     fn handle_collections(map: Map<String, u32>, vec: Vec<u32>) -> (Map<String, u32>, Vec<u32>);
     ```
+
     Parsed as:
+
     ```json
     {
       "name": "handle_collections",
@@ -383,10 +410,13 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     ```
 
     4. **Optional Types**
+
     ```rust
     fn handle_optionals(maybe_u32: Option<u32>, maybe_address: Option<Address>) -> OptionalData;
     ```
+
     Parsed as:
+
     ```json
     {
       "name": "handle_optionals",
@@ -399,10 +429,13 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     ```
 
     5. **Result Types**
+
     ```rust
     fn handle_result() -> Result<Address, ContractError>;
     ```
+
     Parsed as:
+
     ```json
     {
       "name": "handle_result",
@@ -412,16 +445,17 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     ```
 
     6. **Complex Types**
+
     ```rust
     fn handle_complex(data: ComplexData) -> (Data, ComplexData);
     ```
+
     Parsed as:
+
     ```json
     {
       "name": "handle_complex",
-      "parameters": [
-        { "name": "data", "type": "ComplexData" }
-      ],
+      "parameters": [{ "name": "data", "type": "ComplexData" }],
       "returnType": "(Data, ComplexData)"
     }
     ```
@@ -429,16 +463,17 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     ### Note About the Env Parameter
 
     All contract methods in Soroban receive an `env` parameter that provides access to the blockchain environment. This parameter is automatically provided by the Soroban blockchain and is filtered out from the interface. For example, a method defined as:
+
     ```rust
     fn set_admin(env: Env, admin: Address) -> ();
     ```
+
     Will appear in the interface as:
+
     ```json
     {
       "name": "set_admin",
-      "parameters": [
-        { "name": "admin", "type": "Address" }
-      ],
+      "parameters": [{ "name": "admin", "type": "Address" }],
       "returnType": "()"
     }
     ```
@@ -467,30 +502,30 @@ STELLAR_SERVER_URL=
 Here's the configuration to use the Stellar MCP server on Cursor, Windsurf, Claude Desktop:
 
 #### 💻 Local
-    
+
 ```json
 {
-    "mcpServers": {
-      "stellar-mcp": {
-        "command": "node",
-        "args": ["your/path/stellar-mcp/dist/index.js"]
+  "mcpServers": {
+    "stellar-mcp": {
+      "command": "node",
+      "args": ["your/path/stellar-mcp/dist/index.js"]
     }
   }
 }
 ```
+
 #### 📦 NPX
 
 ```json
 {
-    "mcpServers": {
-      "stellar-mcp": {
-        "command": "npx",
-        "args": ["-y", "stellar-mcp"]
+  "mcpServers": {
+    "stellar-mcp": {
+      "command": "npx",
+      "args": ["-y", "stellar-mcp"]
     }
   }
 }
 ```
-
 
 #### 🐳 Docker
 
@@ -528,16 +563,18 @@ npm run build
 ### 🚀 Run
 
 Development:
+
 ```bash
 npm run start:dev
 ```
 
 Production:
+
 ```bash
 npm run start:prod
 ```
 
-## 📚 Basic Example Usage 
+## 📚 Basic Example Usage
 
 [Video TBD]
 
@@ -558,17 +595,20 @@ npx @modelcontextprotocol/inspector node <your/path>/stellar-mcp npm run start:p
 ```
 
 This will start the MCP Inspector on port 9229. You can then open your browser and navigate to:
+
 ```
 http://localhost:5173
 ```
 
 The inspector will show you:
+
 - All incoming requests from the LLM
 - Outgoing responses and errors
 - Real-time Stellar network interactions
 - Detailed transaction information
 
 This is particularly useful when:
+
 - Debugging Stellar interactions
 - Monitoring transaction flows
 - Troubleshooting failed operations

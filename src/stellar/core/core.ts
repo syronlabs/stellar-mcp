@@ -1,4 +1,4 @@
-import { Platform } from "../../interfaces/common.interface.js";
+import { Platform } from '../../interfaces/common.interface.js';
 import {
   BuildCommandArgs,
   CommandArgsMap,
@@ -8,8 +8,8 @@ import {
   DirCommandArgs,
   FindCommandArgs,
   OptimizeCommandArgs,
-} from "../../interfaces/soroban/Commands.js";
-import { MessagesManager } from "./messages.js";
+} from '../../interfaces/soroban/Commands.js';
+import { MessagesManager } from './messages.js';
 
 export class Core extends MessagesManager {
   protected linuxCommands: {
@@ -40,22 +40,22 @@ export class Core extends MessagesManager {
     this.linuxCommands = {
       find: (args: FindCommandArgs) =>
         `find "${args.path}" -maxdepth 1 -name "${args.pattern}"`,
-      dir: (args?: DirCommandArgs) => `ls ${args?.path || ""}`,
+      dir: (args?: DirCommandArgs) => `ls ${args?.path || ''}`,
       build: (args: BuildCommandArgs) =>
         `cd ${args.path} && stellar contract build`,
       optimize: (args: OptimizeCommandArgs) =>
         `stellar contract optimize --wasm ${args.wasmPath}`,
       deploy: (args: DeployCommandArgs) =>
-        `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || "testnet"} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ""}`,
+        `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInterface: (args: ContractInterfaceArgs) =>
-        `stellar contract info interface --network ${args.network || "testnet"} --id ${args.contractId}`,
+        `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
     };
   }
 
   private buildWindowsCommands(): void {
     this.windowsCommands = {
       find: (args: FindCommandArgs) => `dir /b "${args.path}\\${args.pattern}"`,
-      dir: (args?: DirCommandArgs) => `dir ${args?.path || ""}`,
+      dir: (args?: DirCommandArgs) => `dir ${args?.path || ''}`,
       build: (args: BuildCommandArgs) =>
         `cd ${args.path} && stellar contract build`,
       optimize: (args: OptimizeCommandArgs) =>
@@ -64,9 +64,9 @@ export class Core extends MessagesManager {
           args.wasmPath as string,
         )}`,
       deploy: (args: DeployCommandArgs) =>
-        `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || "testnet"} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ""}`,
+        `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInterface: (args: ContractInterfaceArgs) =>
-        `stellar contract info interface --network ${args.network || "testnet"} --id ${args.contractId}`,
+        `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
     };
   }
 }
