@@ -33,11 +33,24 @@ describe("ContractParser", () => {
       expect(methods[0]).toEqual({
         name: "__constructor",
         parameters: [
-          { name: "env", type: "Env" },
           { name: "admin", type: "Address" },
         ],
         returnType: "()",
       });
+    });
+
+    it("Should not include the env parameter in the methods", () => {
+      const source = readFixture("contract-output.txt");
+      const parser = new ContractParser(source);
+      const methods = parser.getContractMethods();
+      expect(methods).toHaveLength(17);
+      
+
+      const envMethod = methods.find((method) =>
+        method.parameters.some((param) => param.type === "Env"),
+      );
+
+      expect(envMethod).toBeUndefined();
     });
 
     it("Should parse a simple method with no parameters", () => {

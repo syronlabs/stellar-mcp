@@ -119,7 +119,7 @@ export class ContractParser {
   private parseParameters(paramsText: string): ContractParameter[] {
     return this.parseCommaSeparatedItems(paramsText, (paramText) => {
       const [name, type] = paramText.split(":").map((s) => s.trim());
-      if (name && type) {
+      if (name && type && type !== "Env") {
         return { name, type };
       }
       return null;

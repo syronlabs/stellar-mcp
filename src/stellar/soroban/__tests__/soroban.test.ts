@@ -6,6 +6,7 @@ import { Classic } from "../../classic/classic";
 import { AccountKeyPairSchema } from "../../classic/schemas";
 import { BuildAndOptimizeSchema } from "../schemas";
 import { Soroban } from "../soroban";
+import { ContractInterface } from "../../../interfaces/soroban/ContractInterface";
 
 function getContractAddress(result: OutputMessage[]): string {
   return (
@@ -213,7 +214,7 @@ describe("Soroban Operations", () => {
       expect(contractInterfaceIndex).toBeGreaterThan(-1);
 
       const jsonText = result[contractInterfaceIndex + 1].text;
-      const contractInterface = JSON.parse(jsonText);
+      const contractInterface = JSON.parse(jsonText) as ContractInterface;
 
       const expectedContractName = "Contract";
       const expectedContractMethods = expect.arrayContaining([
@@ -265,7 +266,7 @@ describe("Soroban Operations", () => {
       expect(contractInterfaceIndex).toBeGreaterThan(-1);
 
       const jsonText = result[contractInterfaceIndex + 1].text;
-      const contractInterface = JSON.parse(jsonText);
+      const contractInterface = JSON.parse(jsonText) as ContractInterface;
 
       expect(contractInterface.name).toBe("Contract");
 
