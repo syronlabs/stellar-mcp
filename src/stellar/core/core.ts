@@ -1,5 +1,5 @@
-import { Platform } from "../../interfaces/common.interface.js";
-import { MessagesManager } from "./messages.js";
+import { Platform } from '../../interfaces/common.interface.js';
+import { MessagesManager } from './messages.js';
 
 export class Core extends MessagesManager {
   protected linuxCommands: {
@@ -27,22 +27,22 @@ export class Core extends MessagesManager {
     this.linuxCommands = {
       find: (args) =>
         `find "${args?.path}" -maxdepth 1 -name "${args?.pattern}"`,
-      dir: (args) => `ls ${args?.path || ""}`,
+      dir: (args) => `ls ${args?.path || ''}`,
       build: (args) => `cd ${args?.path} && stellar contract build`,
       optimize: (args) => `stellar contract optimize --wasm ${args?.wasmPath}`,
       deploy: (args) =>
-        `stellar contract deploy --wasm "${args?.wasmPath}" --source "${args?.secretKey}" --network ${args?.network || "testnet"} ${args?.constructorArgs?.length ? `-- ${args.constructorArgs}` : ""}`,
+        `stellar contract deploy --wasm "${args?.wasmPath}" --source "${args?.secretKey}" --network ${args?.network || 'testnet'} ${args?.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInfo: (args) =>
-        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || "testnet"} -- --help`,
+        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || 'testnet'} -- --help`,
       contractMethod: (args) =>
-        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || "testnet"} -- ${args?.method} --help`,
+        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || 'testnet'} -- ${args?.method} --help`,
     };
   }
 
   private buildWindowsCommands(): void {
     this.windowsCommands = {
       find: (args) => `dir /b "${args?.path}\\${args?.pattern}"`,
-      dir: (args) => `dir ${args?.path || ""}`,
+      dir: (args) => `dir ${args?.path || ''}`,
       build: (args) => `cd ${args?.path} && stellar contract build`,
       optimize: (args) =>
         `stellar contract optimize --wasm ${this.resolvePath(
@@ -50,11 +50,11 @@ export class Core extends MessagesManager {
           args?.wasmPath as string,
         )}`,
       deploy: (args) =>
-        `stellar contract deploy --wasm "${args?.wasmPath}" --source "${args?.secretKey}" --network ${args?.network || "testnet"} ${args?.constructorArgs?.length ? `-- ${args.constructorArgs}` : ""}`,
+        `stellar contract deploy --wasm "${args?.wasmPath}" --source "${args?.secretKey}" --network ${args?.network || 'testnet'} ${args?.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInfo: (args) =>
-        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || "testnet"} -- --help`,
+        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || 'testnet'} -- --help`,
       contractMethod: (args) =>
-        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || "testnet"} -- ${args?.method} --help`,
+        `stellar contract invoke --id ${args?.contractId} --source ${args?.secretKey} --network ${args?.network || 'testnet'} -- ${args?.method} --help`,
     };
   }
 }

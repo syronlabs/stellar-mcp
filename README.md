@@ -7,14 +7,18 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
 ### 🛠️ Tools
 
 #### 💫 Stellar Classic Operations
+
 - **stellar_create_account**
+
   - Create a new Stellar account
 
 - **stellar_balance**
+
   - Get the balance of a Stellar account
   - Input: `account` (string): The public key of the account to check balance
 
 - **stellar_payment**
+
   - Send a payment to another account
   - Inputs:
     - `destination` (string, required): The destination account public key
@@ -25,10 +29,12 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
       - `issuer` (string): The asset issuer public key
 
 - **stellar_transactions**
+
   - Get transaction history for an account
   - Input: `account` (string): The account public key to get transactions for
 
 - **stellar_create_asset**
+
   - Create a new asset on the Stellar network
   - Inputs:
     - `code` (string, required): The asset code
@@ -36,7 +42,8 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - `distributorSecretKey` (string, required): The secret key of the distributing account
     - `totalSupply` (string, required): The total supply of the asset
 
-- **stellar_change_trust** 
+- **stellar_change_trust**
+
   - Change trustline for an asset
   - Inputs:
     - `asset` (object, required):
@@ -46,6 +53,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - `secretKey` (string, required): The secret key of the account changing trust
 
 - **stellar_create_claimable_balance**
+
   - Create a claimable balance that can be claimed by specified accounts under certain conditions
   - Inputs:
     - `asset` (object, optional): Custom asset details. If not provided, uses native XLM
@@ -60,6 +68,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - `secretKey` (string, required): Secret key of the account creating the balance
 
 - **stellar_claim_claimable_balance**
+
   - Claim a claimable balance using its ID
   - Inputs:
     - `balanceId` (string, required): ID of the claimable balance to claim (returned from createClaimableBalance)
@@ -72,6 +81,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
 #### 📝 Soroban Smart Contract Operations
 
 - **soroban_build_and_optimize**
+
   - Build and optimize Soroban smart contracts
   - Inputs:
     - `contractPath` (string, optional): The path to the contract directory. Defaults to current working directory
@@ -86,6 +96,7 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Provides detailed logs of the entire process
 
 - **soroban_deploy**
+
   - Deploy Soroban smart contracts to the Stellar network
   - Inputs:
     - `wasmPath` (string, required): Path to the compiled WASM file
@@ -106,28 +117,30 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Provides detailed deployment logs and status updates
     - Supports both simple contracts and contracts with initialization logic
   - Example Usage:
+
     ```typescript
     // Deploying a contract without constructor
     await soroban.deploy({
-      wasmPath: "path/to/hello_world.wasm",
-      secretKey: "S...",
+      wasmPath: 'path/to/hello_world.wasm',
+      secretKey: 'S...',
     });
 
     // Deploying a contract with constructor
     await soroban.deploy({
-      wasmPath: "path/to/contract_with_constructor.wasm",
-      secretKey: "S...",
+      wasmPath: 'path/to/contract_with_constructor.wasm',
+      secretKey: 'S...',
       constructorArgs: [
         {
-          name: "admin",
-          type: "Address",
-          value: "G...",
+          name: 'admin',
+          type: 'Address',
+          value: 'G...',
         },
       ],
     });
     ```
 
 - **soroban_retrieve_contract_methods**
+
   - Retrieve all available methods from a deployed Soroban smart contract
   - Inputs:
     - `contractAddress` (string, required): Address of the deployed contract (starts with "C")
@@ -143,37 +156,38 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     - Handles both simple and complex argument types
     - Returns consistent format for all contract methods
   - Example Usage:
+
     ```typescript
     const methods = await soroban.retrieveContractMethods({
-      contractAddress: "CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO",
-      secretKey: "S...",
+      contractAddress:
+        'CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO',
+      secretKey: 'S...',
     });
 
     // Example response:
     [
       {
-        type: "text",
-        text: "🚀 Retrieving contract methods for address: CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO"
+        type: 'text',
+        text: '🚀 Retrieving contract methods for address: CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO',
       },
       {
-        type: "text",
-        text: "Method: \"set_admin\"; Arguments: admin: Address"
+        type: 'text',
+        text: 'Method: "set_admin"; Arguments: admin: Address',
       },
       {
-        type: "text",
-        text: "Method: \"get_admin\"; Arguments: No arguments"
+        type: 'text',
+        text: 'Method: "get_admin"; Arguments: No arguments',
       },
       {
-        type: "text",
-        text: "Method: \"method_with_args\"; Arguments: arg1: u32, arg2: u32"
+        type: 'text',
+        text: 'Method: "method_with_args"; Arguments: arg1: u32, arg2: u32',
       },
       {
-        type: "text",
-        text: "Method: \"struct_as_arg\"; Arguments: arg: { admin: Address }"
-      }
-    ]
+        type: 'text',
+        text: 'Method: "struct_as_arg"; Arguments: arg: { admin: Address }',
+      },
+    ];
     ```
-
 
 ## ⭐ Key Features
 
@@ -199,30 +213,30 @@ STELLAR_SERVER_URL=
 Here's the configuration to use the Stellar MCP server on Cursor, Windsurf, Claude Desktop:
 
 #### 💻 Local
-    
+
 ```json
 {
-    "mcpServers": {
-      "stellar-mcp": {
-        "command": "node",
-        "args": ["your/path/stellar-mcp/dist/index.js"]
+  "mcpServers": {
+    "stellar-mcp": {
+      "command": "node",
+      "args": ["your/path/stellar-mcp/dist/index.js"]
     }
   }
 }
 ```
+
 #### 📦 NPX
 
 ```json
 {
-    "mcpServers": {
-      "stellar-mcp": {
-        "command": "npx",
-        "args": ["-y", "stellar-mcp"]
+  "mcpServers": {
+    "stellar-mcp": {
+      "command": "npx",
+      "args": ["-y", "stellar-mcp"]
     }
   }
 }
 ```
-
 
 #### 🐳 Docker
 
@@ -260,16 +274,18 @@ npm run build
 ### 🚀 Run
 
 Development:
+
 ```bash
 npm run start:dev
 ```
 
 Production:
+
 ```bash
 npm run start:prod
 ```
 
-## 📚 Basic Example Usage 
+## 📚 Basic Example Usage
 
 [Video TBD]
 
@@ -290,17 +306,20 @@ npx @modelcontextprotocol/inspector node <your/path>/stellar-mcp npm run start:p
 ```
 
 This will start the MCP Inspector on port 9229. You can then open your browser and navigate to:
+
 ```
 http://localhost:5173
 ```
 
 The inspector will show you:
+
 - All incoming requests from the LLM
 - Outgoing responses and errors
 - Real-time Stellar network interactions
 - Detailed transaction information
 
 This is particularly useful when:
+
 - Debugging Stellar interactions
 - Monitoring transaction flows
 - Troubleshooting failed operations
