@@ -32,8 +32,8 @@ export class Core extends MessagesManager {
     args: CommandArgsMap[T],
   ): string {
     return this.platform === Platform.WINDOWS
-      ? this.windowsCommands[command](args as any)
-      : this.linuxCommands[command](args as any);
+      ? this.windowsCommands[command](args)
+      : this.linuxCommands[command](args);
   }
 
   private buildLinuxCommands(): void {
