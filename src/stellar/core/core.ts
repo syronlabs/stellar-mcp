@@ -1,13 +1,13 @@
 import { Platform } from '../../interfaces/common.interface.js';
 import {
-  BuildCommandArgs,
   CommandArgsMap,
   CommandName,
-  ContractInterfaceArgs,
-  DeployCommandArgs,
-  DirCommandArgs,
-  FindCommandArgs,
-  OptimizeCommandArgs,
+  IBuildCommandArgs,
+  IContractInterfaceArgs,
+  IDeployCommandArgs,
+  IDirCommandArgs,
+  IFindCommandArgs,
+  IOptimizeCommandArgs,
 } from '../../interfaces/soroban/Commands.js';
 import { MessagesManager } from './messages.js';
 
@@ -38,34 +38,35 @@ export class Core extends MessagesManager {
 
   private buildLinuxCommands(): void {
     this.linuxCommands = {
-      find: (args: FindCommandArgs) =>
+      find: (args: IFindCommandArgs) =>
         `find "${args.path}" -maxdepth 1 -name "${args.pattern}"`,
-      dir: (args?: DirCommandArgs) => `ls ${args?.path || ''}`,
-      build: (args: BuildCommandArgs) =>
+      dir: (args?: IDirCommandArgs) => `ls ${args?.path || ''}`,
+      build: (args: IBuildCommandArgs) =>
         `cd ${args.path} && stellar contract build`,
-      optimize: (args: OptimizeCommandArgs) =>
+      optimize: (args: IOptimizeCommandArgs) =>
         `stellar contract optimize --wasm ${args.wasmPath}`,
-      deploy: (args: DeployCommandArgs) =>
+      deploy: (args: IDeployCommandArgs) =>
         `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
-      contractInterface: (args: ContractInterfaceArgs) =>
+      contractInterface: (args: IContractInterfaceArgs) =>
         `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
     };
   }
 
   private buildWindowsCommands(): void {
     this.windowsCommands = {
-      find: (args: FindCommandArgs) => `dir /b "${args.path}\\${args.pattern}"`,
-      dir: (args?: DirCommandArgs) => `dir ${args?.path || ''}`,
-      build: (args: BuildCommandArgs) =>
+      find: (args: IFindCommandArgs) =>
+        `dir /b "${args.path}\\${args.pattern}"`,
+      dir: (args?: IDirCommandArgs) => `dir ${args?.path || ''}`,
+      build: (args: IBuildCommandArgs) =>
         `cd ${args.path} && stellar contract build`,
-      optimize: (args: OptimizeCommandArgs) =>
+      optimize: (args: IOptimizeCommandArgs) =>
         `stellar contract optimize --wasm ${this.resolvePath(
           args.contractPath as string,
           args.wasmPath as string,
         )}`,
-      deploy: (args: DeployCommandArgs) =>
+      deploy: (args: IDeployCommandArgs) =>
         `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
-      contractInterface: (args: ContractInterfaceArgs) =>
+      contractInterface: (args: IContractInterfaceArgs) =>
         `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
     };
   }

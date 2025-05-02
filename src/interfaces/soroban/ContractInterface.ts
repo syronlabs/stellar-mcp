@@ -1,26 +1,26 @@
-export interface ContractMethod {
+export interface IContractMethod {
   name: string;
-  parameters: ContractParameter[];
+  parameters: IContractParameter[];
   returnType: string;
 }
 
-export interface ContractParameter {
+export interface IContractParameter {
   name: string;
   type: string;
 }
 
-export interface ContractStruct {
+export interface IContractStruct {
   name: string;
-  fields: ContractField[];
+  fields: IContractField[];
 }
 
-export interface ContractField {
+export interface IContractField {
   name: string;
   type: string;
   visibility: 'pub' | 'private';
 }
 
-export interface ContractEnum {
+export interface IContractEnum {
   name: string;
   variants: {
     name: string;
@@ -30,9 +30,9 @@ export interface ContractEnum {
   isError?: boolean;
 }
 
-export interface ContractInterface {
+export interface IContractInterface {
   name: string;
-  methods: ContractMethod[];
-  structs: ContractStruct[];
-  enums: ContractEnum[];
+  methods: IContractMethod[];
+  structs: IContractStruct[];
+  enums: IContractEnum[];
 }

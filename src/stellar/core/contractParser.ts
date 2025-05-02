@@ -1,10 +1,10 @@
 import {
-  ContractEnum,
-  ContractField,
-  ContractInterface,
-  ContractMethod,
-  ContractParameter,
-  ContractStruct,
+  IContractEnum,
+  IContractField,
+  IContractInterface,
+  IContractMethod,
+  IContractParameter,
+  IContractStruct,
 } from '../../interfaces/soroban/ContractInterface';
 
 const REGEX_PATTERNS = {
@@ -17,9 +17,9 @@ const REGEX_PATTERNS = {
 
 export class ContractParser {
   private contractName: string | null = null;
-  private contractMethods: ContractMethod[] = [];
-  private contractStructs: ContractStruct[] = [];
-  private contractEnums: ContractEnum[] = [];
+  private contractMethods: IContractMethod[] = [];
+  private contractStructs: IContractStruct[] = [];
+  private contractEnums: IContractEnum[] = [];
 
   constructor(protected readonly source: string) {
     this.parseSource(source);
@@ -29,19 +29,19 @@ export class ContractParser {
     return this.contractName;
   }
 
-  public getContractMethods(): ContractMethod[] {
+  public getContractMethods(): IContractMethod[] {
     return this.contractMethods;
   }
 
-  public getContractStructs(): ContractStruct[] {
+  public getContractStructs(): IContractStruct[] {
     return this.contractStructs;
   }
 
-  public getContractEnums(): ContractEnum[] {
+  public getContractEnums(): IContractEnum[] {
     return this.contractEnums;
   }
 
-  public getContractInterface(): ContractInterface {
+  public getContractInterface(): IContractInterface {
     return {
       name: this.contractName as string,
       methods: this.contractMethods,
@@ -73,25 +73,25 @@ export class ContractParser {
     return 'DefaultContractName';
   }
 
-  private parseContractMethods(lines: string[]): ContractMethod[] {
+  private parseContractMethods(lines: string[]): IContractMethod[] {
     return this.collectLines(lines, 'fn', ';', (methodLines) =>
       this.parseMethodLines(methodLines),
     );
   }
 
-  private parseContractStructs(lines: string[]): ContractStruct[] {
+  private parseContractStructs(lines: string[]): IContractStruct[] {
     return this.collectLines(lines, 'pub struct', '}', (structLines) =>
       this.parseStructLines(structLines),
     );
   }
 
-  private parseContractEnums(lines: string[]): ContractEnum[] {
+  private parseContractEnums(lines: string[]): IContractEnum[] {
     return this.collectLines(lines, 'pub enum', '}', (enumLines) =>
       this.parseEnumLines(enumLines),
     );
   }
 
-  private parseMethodLines(lines: string[]): ContractMethod | null {
+  private parseMethodLines(lines: string[]): IContractMethod | null {
     const methodText = lines.join(' ');
     const methodMatch = methodText.match(REGEX_PATTERNS.METHOD);
 
@@ -116,7 +116,7 @@ export class ContractParser {
     };
   }
 
-  private parseParameters(paramsText: string): ContractParameter[] {
+  private parseParameters(paramsText: string): IContractParameter[] {
     return this.parseCommaSeparatedItems(paramsText, (paramText) => {
       const [name, type] = paramText.split(':').map((s) => s.trim());
       if (name && type && type !== 'Env') {
@@ -126,7 +126,7 @@ export class ContractParser {
     });
   }
 
-  private parseStructLines(lines: string[]): ContractStruct | null {
+  private parseStructLines(lines: string[]): IContractStruct | null {
     const structText = lines.join(' ');
     const structMatch = structText.match(REGEX_PATTERNS.STRUCT);
 
@@ -143,7 +143,7 @@ export class ContractParser {
     };
   }
 
-  private parseStructFields(fieldsText: string): ContractField[] {
+  private parseStructFields(fieldsText: string): IContractField[] {
     return this.parseCommaSeparatedItems(fieldsText, (fieldText) => {
       const [visibility, name, type] = this.parseField(fieldText);
       if (name && type) {
@@ -168,7 +168,7 @@ export class ContractParser {
     return [visibility, name, type];
   }
 
-  private parseEnumLines(lines: string[]): ContractEnum | null {
+  private parseEnumLines(lines: string[]): IContractEnum | null {
     const enumText = lines.join(' ');
     const enumMatch = enumText.match(REGEX_PATTERNS.ENUM);
 

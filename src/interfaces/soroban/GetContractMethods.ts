@@ -2,4 +2,4 @@ import { z } from 'zod';
 
 import { GetContractMethodsSchema } from '../../stellar/soroban/schemas';
 
-export type GetContractMethodsArgs = z.infer<typeof GetContractMethodsSchema>;
+export type IGetContractMethodsArgs = z.infer<typeof GetContractMethodsSchema>;

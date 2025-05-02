@@ -2,7 +2,7 @@ import { resolve } from 'path';
 import { z } from 'zod';
 
 import { OutputMessage } from '../../../interfaces/common.interface';
-import { ContractInterface } from '../../../interfaces/soroban/ContractInterface';
+import { IContractInterface } from '../../../interfaces/soroban/ContractInterface';
 import { Classic } from '../../classic/classic';
 import { AccountKeyPairSchema } from '../../classic/schemas';
 import { BuildAndOptimizeSchema } from '../schemas';
@@ -214,7 +214,7 @@ describe('Soroban Operations', () => {
       expect(contractInterfaceIndex).toBeGreaterThan(-1);
 
       const jsonText = result[contractInterfaceIndex + 1].text;
-      const contractInterface = JSON.parse(jsonText) as ContractInterface;
+      const contractInterface = JSON.parse(jsonText) as IContractInterface;
 
       const expectedContractName = 'Contract';
       const expectedContractMethods = expect.arrayContaining([
@@ -266,7 +266,7 @@ describe('Soroban Operations', () => {
       expect(contractInterfaceIndex).toBeGreaterThan(-1);
 
       const jsonText = result[contractInterfaceIndex + 1].text;
-      const contractInterface = JSON.parse(jsonText) as ContractInterface;
+      const contractInterface = JSON.parse(jsonText) as IContractInterface;
 
       expect(contractInterface.name).toBe('Contract');
 

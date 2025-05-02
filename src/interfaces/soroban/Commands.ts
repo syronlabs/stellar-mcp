@@ -1,49 +1,49 @@
-export interface FindCommandArgs {
+export interface IFindCommandArgs {
   path: string;
   pattern: string;
 }
 
-export interface DirCommandArgs {
+export interface IDirCommandArgs {
   path?: string;
 }
 
-export interface BuildCommandArgs {
+export interface IBuildCommandArgs {
   path: string;
 }
 
-export interface OptimizeCommandArgs {
+export interface IOptimizeCommandArgs {
   wasmPath: string;
   contractPath?: string;
 }
 
-export interface DeployCommandArgs {
+export interface IDeployCommandArgs {
   wasmPath: string;
   secretKey: string;
   network?: string;
   constructorArgs?: string;
 }
 
-export interface ContractInterfaceArgs {
+export interface IContractInterfaceArgs {
   contractId: string;
   network?: string;
 }
 
 export type CommandArgsMap = {
-  find: FindCommandArgs;
-  dir: DirCommandArgs;
-  build: BuildCommandArgs;
-  optimize: OptimizeCommandArgs;
-  deploy: DeployCommandArgs;
-  contractInterface: ContractInterfaceArgs;
+  find: IFindCommandArgs;
+  dir: IDirCommandArgs;
+  build: IBuildCommandArgs;
+  optimize: IOptimizeCommandArgs;
+  deploy: IDeployCommandArgs;
+  contractInterface: IContractInterfaceArgs;
 };
 
 export type CommandArgs =
-  | FindCommandArgs
-  | DirCommandArgs
-  | BuildCommandArgs
-  | OptimizeCommandArgs
-  | DeployCommandArgs
-  | ContractInterfaceArgs;
+  | IFindCommandArgs
+  | IDirCommandArgs
+  | IBuildCommandArgs
+  | IOptimizeCommandArgs
+  | IDeployCommandArgs
+  | IContractInterfaceArgs;
 
 export type CommandName =
   | 'find'

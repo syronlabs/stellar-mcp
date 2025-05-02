@@ -3,10 +3,10 @@ import { exec } from 'child_process';
 
 import getNetworkConfig from '../../config/environment.config.js';
 import { OutputMessage, Platform } from '../../interfaces/common.interface.js';
-import { ContractInterface } from '../../interfaces/soroban/ContractInterface';
-import { DeployContractArgs } from '../../interfaces/soroban/DeployContractArgs.js';
-import { ConstructorArg } from '../../interfaces/soroban/DeployContractArgs.js';
-import { GetContractMethodsArgs } from '../../interfaces/soroban/GetContractMethods.js';
+import { IContractInterface } from '../../interfaces/soroban/ContractInterface';
+import { IDeployContractArgs } from '../../interfaces/soroban/DeployContractArgs.js';
+import { IConstructorArg } from '../../interfaces/soroban/DeployContractArgs.js';
+import { IGetContractMethodsArgs } from '../../interfaces/soroban/GetContractMethods.js';
 import { ContractParser } from '../core/contractParser.js';
 import { Core } from '../core/core.js';
 
@@ -239,7 +239,7 @@ export class Soroban extends Core {
     }
   }
 
-  async deploy(params: DeployContractArgs): Promise<OutputMessage[]> {
+  async deploy(params: IDeployContractArgs): Promise<OutputMessage[]> {
     try {
       await this.checkContractConstructorArgs(params);
 
@@ -264,7 +264,7 @@ export class Soroban extends Core {
     }
   }
   async retrieveContractMethods(
-    params: GetContractMethodsArgs,
+    params: IGetContractMethodsArgs,
   ): Promise<OutputMessage[]> {
     try {
       const { contractAddress } = params;
@@ -306,13 +306,13 @@ export class Soroban extends Core {
 
   private async getContractInterface(
     contractAddress: string,
-  ): Promise<ContractInterface> {
+  ): Promise<IContractInterface> {
     const command = this.getCommand('contractInterface', {
       contractId: contractAddress,
       network: this.network,
     });
 
-    return new Promise<ContractInterface>((resolve) => {
+    return new Promise<IContractInterface>((resolve) => {
       exec(command, (_, stdout) => {
         const parser = new ContractParser(stdout);
         const contractInterface = parser.getContractInterface();
@@ -335,7 +335,7 @@ export class Soroban extends Core {
     wasmPath,
     secretKey,
     constructorArgs,
-  }: DeployContractArgs): Promise<OutputMessage[]> {
+  }: IDeployContractArgs): Promise<OutputMessage[]> {
     const command = this.getCommand('deploy', {
       wasmPath,
       secretKey,
@@ -387,7 +387,7 @@ export class Soroban extends Core {
   }
 
   private async checkContractConstructorArgs(
-    params: DeployContractArgs,
+    params: IDeployContractArgs,
   ): Promise<void> {
     const { result } = await this.resolveContractArgs(params.wasmPath);
 
@@ -400,7 +400,7 @@ export class Soroban extends Core {
 
   private async resolveContractArgs(
     contractPath: string,
-  ): Promise<{ result: boolean; args: ConstructorArg[] }> {
+  ): Promise<{ result: boolean; args: IConstructorArg[] }> {
     const packageName = this.resolvePacakgeName(contractPath);
     const contractArgs = this.readContractArgs(contractPath, packageName);
 
@@ -415,7 +415,7 @@ export class Soroban extends Core {
     contractPath: string,
     packageName: string,
     currentPath?: string,
-  ): ConstructorArg[] {
+  ): IConstructorArg[] {
     const srcDir =
       currentPath || this.resolvePath(contractPath, '../../../../');
     const entries = this.readDir(srcDir);
@@ -450,7 +450,7 @@ export class Soroban extends Core {
   private extractConstructorArgsFromFile(
     filePath: string,
     fileName: string,
-  ): ConstructorArg[] {
+  ): IConstructorArg[] {
     if (!fileName.endsWith('.rs')) {
       return [];
     }
@@ -464,15 +464,15 @@ export class Soroban extends Core {
     return this.parseConstructorArgs(constructorMatch[1]);
   }
 
-  private parseConstructorArgs(args: string): ConstructorArg[] {
+  private parseConstructorArgs(args: string): IConstructorArg[] {
     return args
       .split(',')
       .slice(1)
       .map(this.parseArgument)
-      .filter((arg): arg is ConstructorArg => arg !== null);
+      .filter((arg): arg is IConstructorArg => arg !== null);
   }
 
-  private parseArgument(arg: string): ConstructorArg | null {
+  private parseArgument(arg: string): IConstructorArg | null {
     const [name, type] = arg
       .trim()
       .split(': ')
@@ -500,7 +500,7 @@ export class Soroban extends Core {
     );
   }
 
-  private resolveConstructorArgs(constructorArgs: ConstructorArg[]): string {
+  private resolveConstructorArgs(constructorArgs: IConstructorArg[]): string {
     return constructorArgs
       .map((arg) => `--${arg.name} ${arg.value}`)
       .join(', ');
