@@ -208,17 +208,31 @@ describe("Soroban Operations", () => {
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
 
-      const methodEntries = result.filter(
-        (item) => item.type === "text" && item.text.startsWith('Method: "'),
+      const contractInterfaceIndex = result.findIndex(
+        (item) => item.text === "Contract Interface",
       );
+      expect(contractInterfaceIndex).toBeGreaterThan(-1);
 
-      const methodTexts = methodEntries.map((entry) => entry.text);
+      const jsonText = result[contractInterfaceIndex + 1].text;
+      const contractInterface = JSON.parse(jsonText);
 
-      expect(methodTexts).toEqual(
-        expect.arrayContaining([
-          expect.stringContaining('Method: "hello"; Arguments: to: String'),
-        ]),
-      );
+      const expectedContractName = "Contract";
+      const expectedContractMethods = expect.arrayContaining([
+        expect.objectContaining({
+          name: "hello",
+          parameters: expect.arrayContaining([
+            expect.objectContaining({ name: "to", type: "String" }),
+          ]),
+          returnType: "Vec<String>",
+        }),
+      ]);
+
+      const expectedContractInterface = expect.objectContaining({
+        name: expectedContractName,
+        methods: expectedContractMethods,
+      });
+
+      expect(contractInterface).toEqual(expectedContractInterface);
     });
 
     it("Should retrieve contract methods with constructor", async () => {
@@ -247,31 +261,44 @@ describe("Soroban Operations", () => {
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
 
-      const methodEntries = result.filter(
-        (item) => item.type === "text" && item.text.startsWith('Method: "'),
+      const contractInterfaceIndex = result.findIndex(
+        (item) => item.text === "Contract Interface",
       );
+      expect(contractInterfaceIndex).toBeGreaterThan(-1);
 
-      expect(methodEntries.length).toBeGreaterThan(0);
+      const jsonText = result[contractInterfaceIndex + 1].text;
+      const contractInterface = JSON.parse(jsonText);
 
-      const methodTexts = methodEntries.map((entry) => entry.text);
+      expect(contractInterface.name).toBe("Contract");
 
-      expect(methodTexts).toEqual(
+      const setAdminMethod = expect.objectContaining({
+        name: "set_admin",
+        parameters: expect.arrayContaining([
+          expect.objectContaining({ name: "admin", type: "Address" }),
+        ]),
+        returnType: "()",
+      });
+
+      const getAdminMethod = expect.objectContaining({
+        name: "get_admin",
+        parameters: expect.arrayContaining([]),
+        returnType: "Address",
+      });
+
+      const methodWithArgsMethod = expect.objectContaining({
+        name: "method_with_args",
+        parameters: expect.arrayContaining([
+          expect.objectContaining({ name: "arg1", type: "u32" }),
+          expect.objectContaining({ name: "arg2", type: "u32" }),
+        ]),
+        returnType: "(u32, u32)",
+      });
+
+      expect(contractInterface.methods).toEqual(
         expect.arrayContaining([
-          expect.stringContaining(
-            'Method: "set_admin"; Arguments: admin: Address',
-          ),
-          expect.stringContaining(
-            'Method: "get_admin"; Arguments: No arguments',
-          ),
-          expect.stringMatching(
-            /Method: "method_with_args"; Arguments: (arg1: u32, arg2: u32|arg2: u32, arg1: u32)/,
-          ),
-          expect.stringContaining(
-            'Method: "struct_as_arg"; Arguments: arg: { admin: Address }',
-          ),
-          expect.stringContaining(
-            'Method: "struct_as_arg_deep"; Arguments: arg: { admin: Address, data: { admin: Address } }',
-          ),
+          setAdminMethod,
+          getAdminMethod,
+          methodWithArgsMethod,
         ]),
       );
     });
