@@ -7,6 +7,7 @@ import {
   IDeployCommandArgs,
   IDirCommandArgs,
   IFindCommandArgs,
+  IInvokeCommandArgs,
   IOptimizeCommandArgs,
 } from '../../interfaces/soroban/Commands.js';
 import { MessagesManager } from './messages.js';
@@ -49,6 +50,8 @@ export class Core extends MessagesManager {
         `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInterface: (args: IContractInterfaceArgs) =>
         `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
+      invoke: (args: IInvokeCommandArgs) =>
+        `stellar contract invoke --network ${args.network || 'testnet'} --source "${args.secretKey}" --send=yes --id ${args.contractAddress} -- ${args.method} ${args.args.join(' ')}`,
     };
   }
 
@@ -68,6 +71,8 @@ export class Core extends MessagesManager {
         `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInterface: (args: IContractInterfaceArgs) =>
         `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
+      invoke: (args: IInvokeCommandArgs) =>
+        `stellar contract invoke --network ${args.network || 'testnet'} --source "${args.secretKey}" --send=yes --id ${args.contractAddress} -- ${args.method} ${args.args.join(' ')}`,
     };
   }
 }
