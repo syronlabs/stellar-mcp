@@ -27,6 +27,13 @@ export interface IContractInterfaceArgs {
   contractId: string;
   network?: string;
 }
+export interface IInvokeCommandArgs {
+  contractAddress: string;
+  method: string;
+  args: string[];
+  secretKey: string;
+  network?: string;
+}
 
 export type CommandArgsMap = {
   find: IFindCommandArgs;
@@ -35,6 +42,7 @@ export type CommandArgsMap = {
   optimize: IOptimizeCommandArgs;
   deploy: IDeployCommandArgs;
   contractInterface: IContractInterfaceArgs;
+  invoke: IInvokeCommandArgs;
 };
 
 export type CommandArgs =
@@ -43,7 +51,8 @@ export type CommandArgs =
   | IBuildCommandArgs
   | IOptimizeCommandArgs
   | IDeployCommandArgs
-  | IContractInterfaceArgs;
+  | IContractInterfaceArgs
+  | IInvokeCommandArgs;
 
 export type CommandName =
   | 'find'
@@ -51,4 +60,5 @@ export type CommandName =
   | 'build'
   | 'optimize'
   | 'deploy'
-  | 'contractInterface';
+  | 'contractInterface'
+  | 'invoke';
