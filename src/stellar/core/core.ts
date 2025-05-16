@@ -1,4 +1,6 @@
-import { Platform } from '../../interfaces/common.interface.js';
+import { exec } from 'child_process';
+
+import { ICommandResult, Platform } from '../../interfaces/common.interface.js';
 import {
   CommandArgsMap,
   CommandName,
@@ -74,5 +76,13 @@ export class Core extends MessagesManager {
       invoke: (args: IInvokeCommandArgs) =>
         `stellar contract invoke --network ${args.network || 'testnet'} --source "${args.secretKey}" --send=yes --id ${args.contractAddress} -- ${args.method} ${args.args.join(' ')}`,
     };
+  }
+
+  protected async executeCommand(command: string): Promise<ICommandResult> {
+    return new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+        resolve({ error, stdout, stderr });
+      });
+    });
   }
 }
