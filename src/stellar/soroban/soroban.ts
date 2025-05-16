@@ -1,14 +1,22 @@
 import { rpc } from '@stellar/stellar-sdk';
-import { exec } from 'child_process';
 
 import getNetworkConfig from '../../config/environment.config.js';
-import { OutputMessage, Platform } from '../../interfaces/common.interface.js';
+import {
+  ICommandResult,
+  OutputMessage,
+  Platform,
+} from '../../interfaces/common.interface.js';
 import { IContractInterface } from '../../interfaces/soroban/ContractInterface';
 import { IDeployContractArgs } from '../../interfaces/soroban/DeployContractArgs.js';
 import { IConstructorArg } from '../../interfaces/soroban/DeployContractArgs.js';
 import { IGetContractMethodsArgs } from '../../interfaces/soroban/GetContractMethods.js';
+import {
+  IInvokeContractMethod,
+  IInvokeContractMethodArgs,
+} from '../../interfaces/soroban/InvokeContractMethod.js';
 import { ContractParser } from '../core/contractParser.js';
 import { Core } from '../core/core.js';
+import { SorobanValidationService } from '../services/validation.service.js';
 
 export class Soroban extends Core {
   private server: rpc.Server;
@@ -20,10 +28,12 @@ export class Soroban extends Core {
       networkPassphrase: string;
     };
   };
+  private readonly validationService: SorobanValidationService;
 
   constructor(serverUrl: string) {
     super();
     this.networkConfig = getNetworkConfig(serverUrl);
+    this.validationService = new SorobanValidationService();
 
     const network = serverUrl.includes('testnet')
       ? 'testnet'
@@ -36,51 +46,25 @@ export class Soroban extends Core {
     this.network = network;
   }
 
-  private async executeBuildCommand(
-    contractPath: string,
-  ): Promise<{ stdout: string; stderr: string }> {
-    return new Promise((resolve) => {
-      const command = this.getCommand('build', { path: contractPath });
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.error('Error:', error);
-          if (
-            this.platform !== Platform.WINDOWS &&
-            !stderr.includes('could not find `Cargo.toml`')
-          ) {
-            stderr = 'The system cannot find the path specified';
-          }
-
-          resolve({ stdout, stderr });
-          return;
-        }
-        resolve({ stdout, stderr });
-      });
-    });
-  }
-
   private async findWasmFiles(wasmDir: string): Promise<string[]> {
-    return new Promise((resolve, reject) => {
-      const findCommand = this.getCommand('find', {
-        path: wasmDir,
-        pattern: '*.wasm',
-      });
-
-      exec(findCommand, (error, stdout, stderr) => {
-        if (error) {
-          console.error('Error finding WASM files:', error);
-          reject(error);
-          return;
-        }
-
-        const wasmFiles = stdout
-          .trim()
-          .split('\n')
-          .filter((file) => file.endsWith('.wasm'));
-
-        resolve(wasmFiles);
-      });
+    const findCommand = this.getCommand('find', {
+      path: wasmDir,
+      pattern: '*.wasm',
     });
+
+    const { error, stdout, stderr } = await this.executeCommand(findCommand);
+
+    if (error) {
+      console.error('Error finding WASM files:', error);
+      throw new Error(`Error finding WASM files: ${stderr}`);
+    }
+
+    const wasmFiles = stdout
+      .trim()
+      .split('\n')
+      .filter((file) => file.endsWith('.wasm'));
+
+    return wasmFiles;
   }
 
   private async optimizeWasmFile(
@@ -91,34 +75,31 @@ export class Soroban extends Core {
     stdout: string;
     stderr: string;
   }> {
-    return new Promise((resolve) => {
-      const wasmPath =
-        this.platform === Platform.WINDOWS
-          ? `target/wasm32-unknown-unknown/release/${wasmFile}`
-          : wasmFile;
+    const wasmPath =
+      this.platform === Platform.WINDOWS
+        ? `target/wasm32-unknown-unknown/release/${wasmFile}`
+        : wasmFile;
 
-      const optimizeCommand = this.getCommand('optimize', {
-        wasmPath,
-        contractPath,
-      });
-
-      exec(optimizeCommand, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Error optimizing ${wasmFile}:`, error);
-          resolve({
-            file: wasmFile,
-            stdout: '',
-            stderr: `Error optimizing ${wasmFile}: ${error.message || error}`,
-          });
-          return;
-        }
-        resolve({
-          file: wasmFile,
-          stdout,
-          stderr,
-        });
-      });
+    const optimizeCommand = this.getCommand('optimize', {
+      wasmPath,
+      contractPath,
     });
+
+    const { error, stdout, stderr } =
+      await this.executeCommand(optimizeCommand);
+
+    const result = {
+      file: wasmFile,
+      stdout,
+      stderr,
+    };
+
+    if (error) {
+      console.error(`Error optimizing ${wasmFile}:`, error);
+      result.stderr = `Error optimizing ${wasmFile}: ${error.message || error}`;
+    }
+
+    return result;
   }
 
   private formatBuildOutput(
@@ -151,12 +132,18 @@ export class Soroban extends Core {
     try {
       const { contractPath = process.cwd() } = params;
 
-      const { stdout, stderr } = await this.executeBuildCommand(contractPath);
+      const command = this.getCommand('build', { path: contractPath });
+      const { error, stdout, stderr } = await this.executeCommand(command);
+
+      if (error) {
+        throw new Error(`Error building contract: ${stderr}`);
+      }
 
       const wasmDir = this.resolvePath(
         contractPath,
         'target/wasm32-unknown-unknown/release',
       );
+
       if (!this.exists(wasmDir)) {
         const messages = this.formatBuildOutput(
           stdout,
@@ -263,6 +250,7 @@ export class Soroban extends Core {
       return errorMessage;
     }
   }
+
   async retrieveContractMethods(
     params: IGetContractMethodsArgs,
   ): Promise<OutputMessage[]> {
@@ -295,6 +283,103 @@ export class Soroban extends Core {
     }
   }
 
+  private formatCommandArgs(args?: IInvokeContractMethodArgs[]): string[] {
+    if (!args) return [];
+    return args.map((arg) => `--${arg.name} ${arg.value}`);
+  }
+
+  private createInvokeCommand(params: IInvokeContractMethod): string {
+    return this.getCommand('invoke', {
+      contractAddress: params.contractAddress,
+      method: params.method.name,
+      args: this.formatCommandArgs(params.args),
+      secretKey: params.secretKey,
+      network: this.network,
+    });
+  }
+
+  async invokeContractMethod(
+    params: IInvokeContractMethod,
+  ): Promise<OutputMessage[]> {
+    try {
+      const hasInvalidParams =
+        this.validationService.validateInvokeParams(params);
+
+      if (hasInvalidParams) {
+        const errorMessages = [
+          {
+            type: 'text',
+            text: '❌ Invalid parameters',
+          },
+          {
+            type: 'text',
+            text: JSON.stringify(hasInvalidParams, null, 2),
+          },
+        ] as OutputMessage[];
+
+        return errorMessages;
+      }
+
+      const messages = this.createInitialMessage(params.contractAddress);
+      const command = this.createInvokeCommand(params);
+
+      messages.push({
+        type: 'text',
+        text: `🚀 Invoking contract method: ${params.method.name}`,
+      });
+
+      const executionResult = await this.executeCommand(command);
+
+      const parsedResult = this.parseInvokeResult(
+        await this.validateInvokeResult(executionResult),
+      );
+
+      messages.push({
+        type: 'text',
+        text: `🚀 Result: ${JSON.stringify(parsedResult, null, 2)}`,
+      });
+
+      return messages;
+    } catch (error) {
+      console.error('Error in invoke contract method process:', error);
+      throw error;
+    }
+  }
+
+  private async validateInvokeResult({
+    error,
+    stdout,
+    stderr,
+  }: ICommandResult): Promise<OutputMessage[]> {
+    if (error) {
+      console.error('Error executing command:', error);
+      const messages = [
+        ...this.formatStderrOutput(stderr),
+        ...this.formatErrorOutput(stderr),
+      ];
+      return messages;
+    }
+
+    const formattedStdout = this.formatStdoutOutput(stdout);
+    const formattedStderr = this.formatStderrOutput(stderr);
+
+    const messages = [...formattedStdout, ...formattedStderr];
+
+    return messages;
+  }
+
+  private parseInvokeResult(executionResult: OutputMessage[]): any {
+    const result = executionResult.find((m) =>
+      m.text.includes('Transaction successfully sent'),
+    );
+
+    if (!result) {
+      return null;
+    }
+
+    return result;
+  }
+
   private createInitialMessage(contractAddress: string): OutputMessage[] {
     return [
       {
@@ -312,14 +397,12 @@ export class Soroban extends Core {
       network: this.network,
     });
 
-    return new Promise<IContractInterface>((resolve) => {
-      exec(command, (_, stdout) => {
-        const parser = new ContractParser(stdout);
-        const contractInterface = parser.getContractInterface();
+    const { stdout } = await this.executeCommand(command);
 
-        resolve(contractInterface);
-      });
-    });
+    const parser = new ContractParser(stdout);
+    const contractInterface = parser.getContractInterface();
+
+    return contractInterface;
   }
 
   private createDeploymentMessages(): OutputMessage[] {
@@ -345,24 +428,21 @@ export class Soroban extends Core {
         : '',
     });
 
-    return new Promise((resolve) => {
-      exec(command, (error, stdout, stderr) => {
-        if (error) {
-          console.error('Error deploying contract:', error);
-          resolve(this.formatErrorOutput(stderr));
-          return;
-        }
-        const formattedStderr = this.formatStderrOutput(stderr);
-        const formattedStdout = this.formatStdoutOutput(stdout);
+    const { error, stdout, stderr } = await this.executeCommand(command);
 
-        const messages = [
-          ...formattedStderr,
-          ...this.formatContractDeploymentMessage(formattedStdout),
-        ];
+    if (error) {
+      return this.formatErrorOutput(stderr);
+    }
 
-        resolve(messages);
-      });
-    });
+    const formattedStderr = this.formatStderrOutput(stderr);
+    const formattedStdout = this.formatStdoutOutput(stdout);
+
+    const messages = [
+      ...formattedStderr,
+      ...this.formatContractDeploymentMessage(formattedStdout),
+    ];
+
+    return messages;
   }
 
   private formatContractDeploymentMessage(
