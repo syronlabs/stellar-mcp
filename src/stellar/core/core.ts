@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { ExecException, exec } from 'child_process';
 
 import { ICommandResult, Platform } from '../../interfaces/common.interface.js';
 import {
@@ -12,6 +12,7 @@ import {
   IInvokeCommandArgs,
   IOptimizeCommandArgs,
 } from '../../interfaces/soroban/Commands.js';
+import { ErrorType, ExecutionError } from '../../interfaces/soroban/Error.js';
 import { MessagesManager } from './messages.js';
 
 export class Core extends MessagesManager {
@@ -84,5 +85,30 @@ export class Core extends MessagesManager {
         resolve({ error, stdout, stderr });
       });
     });
+  }
+
+  protected handleCommandError(
+    type: ErrorType,
+    {
+      error,
+      stdout,
+      stderr,
+    }: {
+      error: ExecException | null;
+      stdout: string;
+      stderr: string;
+    },
+  ): ExecutionError {
+    if (error) {
+      console.error('Error:', error);
+      if (
+        this.platform !== Platform.WINDOWS &&
+        !stderr.includes('could not find `Cargo.toml`')
+      ) {
+        stderr = 'The system cannot find the path specified';
+      }
+    }
+
+    return { type, stdout, stderr };
   }
 }

@@ -9,6 +9,7 @@ import {
 import { IContractInterface } from '../../interfaces/soroban/ContractInterface';
 import { IDeployContractArgs } from '../../interfaces/soroban/DeployContractArgs.js';
 import { IConstructorArg } from '../../interfaces/soroban/DeployContractArgs.js';
+import { ErrorType } from '../../interfaces/soroban/Error.js';
 import { IGetContractMethodsArgs } from '../../interfaces/soroban/GetContractMethods.js';
 import {
   IInvokeContractMethod,
@@ -133,10 +134,10 @@ export class Soroban extends Core {
       const { contractPath = process.cwd() } = params;
 
       const command = this.getCommand('build', { path: contractPath });
-      const { error, stdout, stderr } = await this.executeCommand(command);
+      let { error, stdout, stderr } = await this.executeCommand(command);
 
       if (error) {
-        throw new Error(`Error building contract: ${stderr}`);
+        this.handleCommandError(ErrorType.BUILD, { error, stdout, stderr });
       }
 
       const wasmDir = this.resolvePath(
