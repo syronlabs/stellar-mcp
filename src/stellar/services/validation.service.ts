@@ -3,12 +3,12 @@ import {
   ValidationContext,
   ValidationError,
   ValidationErrorType,
-} from '../../interfaces/services/validate.interface';
-import { IContractStruct } from '../../interfaces/soroban/ContractInterface';
+} from '../../interfaces/services/validate.interface.js';
+import { IContractStruct } from '../../interfaces/soroban/ContractInterface.js';
 import {
   IInvokeContractMethod,
   IInvokeContractMethodArgs,
-} from '../../interfaces/soroban/InvokeContractMethod';
+} from '../../interfaces/soroban/InvokeContractMethod.js';
 
 export class SorobanValidationService {
   private createValidationError(

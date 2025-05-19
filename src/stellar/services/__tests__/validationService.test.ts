@@ -5,17 +5,17 @@ import {
   ValidationContext,
   ValidationError,
   ValidationErrorType,
-} from '../../../interfaces/services/validate.interface';
+} from '../../../interfaces/services/validate.interface.js';
 import {
   IContractInterface,
   IContractMethod,
-} from '../../../interfaces/soroban/ContractInterface';
+} from '../../../interfaces/soroban/ContractInterface.js';
 import {
   IInvokeContractMethod,
   IInvokeContractMethodArgs,
-} from '../../../interfaces/soroban/InvokeContractMethod';
-import { ContractParser } from '../../core/contractParser';
-import { SorobanValidationService } from '../validation.service';
+} from '../../../interfaces/soroban/InvokeContractMethod.js';
+import { ContractParser } from '../../core/contractParser.js';
+import { SorobanValidationService } from '../validation.service.js';
 
 const readFixture = (filename: string, directory?: string): string => {
   const fixturePath = path.join(
