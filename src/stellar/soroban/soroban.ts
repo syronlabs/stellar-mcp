@@ -137,7 +137,24 @@ export class Soroban extends Core {
       let { error, stdout, stderr } = await this.executeCommand(command);
 
       if (error) {
-        this.handleCommandError(ErrorType.BUILD, { error, stdout, stderr });
+        const errors = this.handleCommandError(ErrorType.BUILD, {
+          error,
+          stdout,
+          stderr,
+        });
+
+        const messages = this.formatBuildOutput(
+          stdout,
+          stderr,
+          contractPath,
+        ) as OutputMessage[];
+
+        messages.push({
+          type: 'text',
+          text: `❌ Error: ${errors.stderr}`,
+        });
+
+        return messages;
       }
 
       const wasmDir = this.resolvePath(
