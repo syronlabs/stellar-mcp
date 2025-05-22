@@ -150,6 +150,12 @@ async function handleToolCall(
         return {
           content: retrieveContractMethods,
         };
+      case 'soroban_invoke_contract_method':
+        const invokeContractMethod = await soroban.invokeContractMethod(args);
+
+        return {
+          content: invokeContractMethod,
+        };
       default:
         throw new Error(`Tool ${name} not found`);
     }
