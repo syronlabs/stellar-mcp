@@ -6,7 +6,7 @@ import {
   OutputMessage,
   Platform,
 } from '../../interfaces/common.interface.js';
-import { IContractInterface } from '../../interfaces/soroban/ContractInterface';
+import { IContractInterface } from '../../interfaces/soroban/ContractInterface.js';
 import { IDeployContractArgs } from '../../interfaces/soroban/DeployContractArgs.js';
 import { IConstructorArg } from '../../interfaces/soroban/DeployContractArgs.js';
 import { ErrorType } from '../../interfaces/soroban/Error.js';
