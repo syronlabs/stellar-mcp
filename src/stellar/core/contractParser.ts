@@ -6,7 +6,7 @@ import {
   IContractParameter,
   IContractStruct,
   Visibility,
-} from '../../interfaces/soroban/ContractInterface';
+} from '../../interfaces/soroban/ContractInterface.js';
 
 const REGEX_PATTERNS = {
   METHOD: /fn\s+(\w+)\s*\((.*?)\)(?:\s*->\s*(.*?))?;/,
