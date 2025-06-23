@@ -478,6 +478,109 @@ A Model Context Protocol server that provides Stellar blockchain interaction cap
     }
     ```
 
+- **soroban_invoke_contract_method**
+
+  - Invoke a method on a deployed Soroban smart contract
+  - Inputs:
+    - `contractAddress` (string, required): Address of the deployed contract (starts with "C")
+    - `method` (object, required): The method to invoke
+      - `name` (string): Name of the method
+      - `parameters` (array): Array of parameters with:
+        - `name` (string): Parameter name
+        - `type` (string): Parameter type
+      - `returnType` (string): Return type of the method
+    - `args` (array, optional): Arguments for the method
+      - `name` (string): Name of the argument
+      - `type` (string): Type of the argument
+      - `value` (string): Value of the argument
+    - `secretKey` (string, required): Secret key of the account to sign the transaction
+    - `structs` (array, optional): Array of contract structs
+      - `name` (string): Struct name
+      - `fields` (array): Array of fields with:
+        - `name` (string): Field name
+        - `type` (string): Field type
+        - `visibility` (string): Field visibility
+    - `enums` (array, optional): Array of contract enums
+      - `name` (string): Enum name
+      - `variants` (array): Array of variants with:
+        - `name` (string): Variant name
+        - `value` (number): Variant value
+        - `dataType` (string): Variant data type
+      - `isError` (boolean): Whether the enum is an error
+  - Outputs:
+    - Transaction execution status
+    - Method invocation result
+    - Any error messages if the invocation fails
+  - Features:
+    - Validates method parameters before invocation
+    - Supports all Soroban data types
+    - Handles complex data structures (structs, enums)
+    - Provides detailed error messages for invalid invocations
+  - Example Usage:
+
+    ```typescript
+    // Invoking a simple method
+    await soroban.invokeContractMethod({
+      contractAddress:
+        'CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO',
+      method: {
+        name: 'get_admin',
+        parameters: [],
+        returnType: 'Address',
+      },
+      secretKey: 'S...',
+    });
+
+    // Invoking a method with arguments
+    await soroban.invokeContractMethod({
+      contractAddress:
+        'CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO',
+      method: {
+        name: 'set_admin',
+        parameters: [{ name: 'admin', type: 'Address' }],
+        returnType: '()',
+      },
+      args: [{ name: 'admin', type: 'Address', value: 'G...' }],
+      secretKey: 'S...',
+    });
+
+    // Invoking a method with complex data types
+    await soroban.invokeContractMethod({
+      contractAddress:
+        'CACLOQNDBVG2Q7VRQGOKC4THZ34FHW2PUYQQOAVBSLJEV6VHEF3ZCIPO',
+      method: {
+        name: 'handle_complex',
+        parameters: [{ name: 'data', type: 'ComplexData' }],
+        returnType: '(Data, ComplexData)',
+      },
+      args: [
+        {
+          name: 'data',
+          type: 'ComplexData',
+          value:
+            '{"admin":"G...","data":{"admin":"G...","counter":1,"message":"test"},"bytes":"base64...","bytes_n":"base64...","duration":3600,"map":{"key":1},"symbol":"TEST","timepoint":1234567890,"vec":[1,2,3]}',
+        },
+      ],
+      structs: [
+        {
+          name: 'ComplexData',
+          fields: [
+            { name: 'admin', type: 'Address', visibility: 'pub' },
+            { name: 'data', type: 'Data', visibility: 'pub' },
+            { name: 'bytes', type: 'Bytes', visibility: 'pub' },
+            { name: 'bytes_n', type: 'BytesN<32>', visibility: 'pub' },
+            { name: 'duration', type: 'Duration', visibility: 'pub' },
+            { name: 'map', type: 'Map<String, u32>', visibility: 'pub' },
+            { name: 'symbol', type: 'Symbol', visibility: 'pub' },
+            { name: 'timepoint', type: 'Timepoint', visibility: 'pub' },
+            { name: 'vec', type: 'Vec<u32>', visibility: 'pub' },
+          ],
+        },
+      ],
+      secretKey: 'S...',
+    });
+    ```
+
 ## ⭐ Key Features
 
 - 👤 Account management (creation, funding, balance checking)

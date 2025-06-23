@@ -1,3 +1,5 @@
+import { ExecException } from 'child_process';
+
 export type OutputMessage = {
   type: 'text';
   text: string;
@@ -13,4 +15,10 @@ export enum Platform {
   WINDOWS = 'win32',
   LINUX = 'linux',
   MACOS = 'darwin',
+}
+
+export interface ICommandResult {
+  error: ExecException | null;
+  stdout: string;
+  stderr: string;
 }

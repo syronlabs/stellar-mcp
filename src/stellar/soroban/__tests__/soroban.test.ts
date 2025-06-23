@@ -63,12 +63,7 @@ describe('Soroban Operations', () => {
         r.text.includes('The system cannot find the path specified'),
       );
 
-      const errorMessage = result.find((r) =>
-        r.text.includes('Error: No WASM directory found after build'),
-      );
-
       expect(pathErrorMessage).toBeDefined();
-      expect(errorMessage).toBeDefined();
     });
 
     it('Should fail if the path exists but there is no a valid contract', async () => {

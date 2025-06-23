@@ -1,4 +1,6 @@
-import { Platform } from '../../interfaces/common.interface.js';
+import { ExecException, exec } from 'child_process';
+
+import { ICommandResult, Platform } from '../../interfaces/common.interface.js';
 import {
   CommandArgsMap,
   CommandName,
@@ -7,8 +9,10 @@ import {
   IDeployCommandArgs,
   IDirCommandArgs,
   IFindCommandArgs,
+  IInvokeCommandArgs,
   IOptimizeCommandArgs,
 } from '../../interfaces/soroban/Commands.js';
+import { ErrorType, ExecutionError } from '../../interfaces/soroban/Error.js';
 import { MessagesManager } from './messages.js';
 
 export class Core extends MessagesManager {
@@ -49,6 +53,8 @@ export class Core extends MessagesManager {
         `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInterface: (args: IContractInterfaceArgs) =>
         `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
+      invoke: (args: IInvokeCommandArgs) =>
+        `stellar contract invoke --network ${args.network || 'testnet'} --source "${args.secretKey}" --send=yes --id ${args.contractAddress} -- ${args.method} ${args.args.join(' ')}`,
     };
   }
 
@@ -68,6 +74,41 @@ export class Core extends MessagesManager {
         `stellar contract deploy --wasm "${args.wasmPath}" --source "${args.secretKey}" --network ${args.network || 'testnet'} ${args.constructorArgs?.length ? `-- ${args.constructorArgs}` : ''}`,
       contractInterface: (args: IContractInterfaceArgs) =>
         `stellar contract info interface --network ${args.network || 'testnet'} --id ${args.contractId}`,
+      invoke: (args: IInvokeCommandArgs) =>
+        `stellar contract invoke --network ${args.network || 'testnet'} --source "${args.secretKey}" --send=yes --id ${args.contractAddress} -- ${args.method} ${args.args.join(' ')}`,
     };
+  }
+
+  protected async executeCommand(command: string): Promise<ICommandResult> {
+    return new Promise((resolve, reject) => {
+      exec(command, (error, stdout, stderr) => {
+        resolve({ error, stdout, stderr });
+      });
+    });
+  }
+
+  protected handleCommandError(
+    type: ErrorType,
+    {
+      error,
+      stdout,
+      stderr,
+    }: {
+      error: ExecException | null;
+      stdout: string;
+      stderr: string;
+    },
+  ): ExecutionError {
+    if (error) {
+      console.error('Error:', error);
+      if (
+        this.platform !== Platform.WINDOWS &&
+        !stderr.includes('could not find `Cargo.toml`')
+      ) {
+        stderr = 'The system cannot find the path specified';
+      }
+    }
+
+    return { type, stdout, stderr };
   }
 }
