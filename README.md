@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/syronlabs-stellar-mcp-badge.png)](https://mseep.ai/app/syronlabs-stellar-mcp)
+
 # 🌟 Stellar MCP
 
 A Model Context Protocol server that provides Stellar blockchain interaction capabilities. This server enables LLMs to interact with both Stellar Classic and Soroban smart contracts, manage accounts, and perform various blockchain operations.
