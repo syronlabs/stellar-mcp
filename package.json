@@ -1,6 +1,6 @@
 {
   "name": "stellar-mcp",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "A Stellar MCP to interact with Horizon API and Smart Contracts",
   "type": "module",
   "main": "dist/index.js",
